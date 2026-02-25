@@ -92,10 +92,6 @@ Pixel rgb(uint8_t r, uint8_t g, uint8_t b) {
   return (0xFF << 24) | (r << 16) | (g << 8) | b;
 }
 
-Pixel color_to_pixel(Color c) {
-  return rgb(c.r, c.g, c.b);
-}
-
 void put_pixel(Pixel *fb, int x, int y, Pixel color) {
   if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
   fb[y * WIDTH + x] = color;
@@ -197,89 +193,6 @@ void draw_triangle(Pixel *fb, Vec2i p0, Vec2i p1, Vec2i p2, Pixel color) {
   draw_line(fb, p2, p0, color);
 }
 
-void sort_vertices(Vec2i *a, Vec2i *b, Vec2i *c) {
-  int tx, ty;
-  if (b->y < a->y) {
-    tx = a->x;
-    ty = a->y;
-    a->x = b->x;
-    a->y = b->y;
-    b->x=tx;
-    b->y=ty;
-  }
-  if (c->y < a->y) {
-    tx = a->x;
-    ty = a->y;
-    a->x = c->x;
-    a->y = c->y;
-    b->x=tx;
-    b->y=ty;
-  }
-  if (c->y < b->y) {
-    tx = b->x;
-    ty = b->y;
-    b->x = c->x;
-    b->y = c->y;
-    c->x=tx;
-    c->y=ty;
-  }
-}
-
-void fill_flat_bottom(Pixel *fb, Vec2i a, Vec2i b, Vec2i c, Pixel color) {
-  float slope_left = (float)(b.x - a.x) / (b.y - a.y);
-  float slope_right = (float)(c.x - a.x) / (c.y - a.y);
-
-  float xl = a.x;
-  float xr = a.x;
-
-  for (int y = a.y; y <= b.y; y++) {
-    draw_line(fb,
-      (Vec2i){(int)xl, y},
-      (Vec2i){(int)xr, y},
-      color
-    );
-
-    xl += slope_left;
-    xr += slope_right;
-  }
-}
-
-void fill_flat_top(Pixel *fb, Vec2i a, Vec2i b, Vec2i c, Pixel color) {
-  float slope_left = (float)(c.x - a.x) / (c.y - a.y);
-  float slope_right = (float)(c.x - b.x) / (c.y - b.y);
-
-  float xl = a.x;
-  float xr = b.x;
-
-  for (int y = a.y; y <= b.y; y++) {
-    draw_line(fb,
-      (Vec2i){(int)xl, y},
-      (Vec2i){(int)xr, y},
-      color
-    );
-
-    xl += slope_left;
-    xr += slope_right;
-  }
-}
-
-void draw_triangle_filled(Pixel *fb, Vec2i a, Vec2i b, Vec2i c, Pixel color) {
-  sort_vertices(&a, &b, &c);
-
-  if (b.y == c.y) {
-    fill_flat_bottom(fb, a, b, c, color);
-  } else if (a.y == c.y) {
-    fill_flat_top(fb, a, b, c, color);
-  } else {
-    Vec2i d;
-    d.x = a.x + (int)((float)(b.y - a.y) / (c.y - a.y) * (c.x - a.x));
-    d.y = b.y;
-
-    fill_flat_bottom(fb, a, b, d, color);
-    fill_flat_top(fb, a, d, c, color);
-  }
-}
-
 typedef struct {
   Vec2i max;
   Vec2i min;
@@ -350,38 +263,6 @@ Pixel sample_texture(Texture *t, float u, float v) {
   return rgb(t->data[idx], t->data[idx +1], t->data[idx + 2]);
 }
 
-void draw_triangle_shaded(Pixel *fb, Vec2i a, Vec2i b, Vec2i c,
-    Color base_color, Vec3f light_dir) {
-  Vec3f normal = {0.0f, 0.0f, 1.0f};
-  float intensity = compute_light(normal, light_dir);
-
-  Color shaded = {
-    (uint8_t)(base_color.r * intensity),
-    (uint8_t)(base_color.g * intensity),
-    (uint8_t)(base_color.b * intensity)
-  };
-
-  draw_triangle_colored(fb, a, b, c, shaded, shaded, shaded);
-}
-
-void draw_triangle_textured(Pixel *fb, Vec2i a, Vec2i b, Vec2i c,
-    Vec2f uva, Vec2f uvb, Vec2f uvc,
-    Texture *tex) {
-  Bounds bounds = get_triangle_bounds(a, b, c);
-
-  for (int y = bounds.min.y; y <= bounds.max.y; y++) {
-    for (int x = bounds.min.x; x <= bounds.max.x; x++) {
-      Barycentric bary = barycentric(a, b, c, (Vec2i){x,y});
-      if (!barycentric_inside(bary)) continue;
-
-      float u = bary.wa * uva.x + bary.wb * uvb.x + bary.wc * uvc.x;
-      float v = bary.wa * uva.y + bary.wb * uvb.y + bary.wc * uvc.y;
-
-      put_pixel(fb, x, y, sample_texture(tex, u, v));
-    }
-  }
-}
-
 void draw_triangle_textured_perspective(Pixel *fb, Vec2i a, Vec2i b, Vec2i c,
     Vec2f uva, Vec2f uvb, Vec2f uvc,
     float wa, float wb, float wc,
@@ -401,14 +282,6 @@ void draw_triangle_textured_perspective(Pixel *fb, Vec2i a, Vec2i b, Vec2i c,
       put_pixel(fb, x, y, sample_texture(tex, u, v));
     }
   }
-}
-
-void draw_quad_textured(Pixel *fb,
-    Vec2i a, Vec2i b, Vec2i c, Vec2i d,
-    Vec2f uva, Vec2f uvb, Vec2f uvc, Vec2f uvd,
-    Texture *tex) {
-  draw_triangle_textured(fb, a, b, c, uva, uvb, uvc, tex);
-  draw_triangle_textured(fb, b, d, c, uvb, uvd, uvc, tex);
 }
 
 void clear(Pixel *fb, Pixel color) {
@@ -503,12 +376,6 @@ int main(void) {
       rgb(255,255,0)
     );
 
-    draw_triangle_filled(framebuffer,
-      (Vec2i){640, 100},
-      (Vec2i){900, 600},
-      (Vec2i){380, 600},
-      rgb(255, 0, 0)
-    );
     draw_triangle_colored(framebuffer,
       (Vec2i){640, 100},
       (Vec2i){900, 600},
@@ -516,32 +383,6 @@ int main(void) {
       (Color){255, 0,   0},
       (Color){0,   255, 0},
       (Color){0,   0,   255}
-    );
-
-
-    draw_triangle_textured(framebuffer,
-      (Vec2i){640, 100},
-      (Vec2i){1100, 600},
-      (Vec2i){200, 600},
-      (Vec2f){0.5f, 0.0f},
-      (Vec2f){1.0f, 1.0f},
-      (Vec2f){0.0f, 1.0f},
-      &tex
-    );
-
-    draw_quad_textured(framebuffer,
-      (Vec2i){200, 100}, (Vec2i){800, 100},
-      (Vec2i){100, 400}, (Vec2i){800, 500},
-      (Vec2f){0.0f, 0.0f}, (Vec2f){1.0f, 0.0f},
-      (Vec2f){0.0f, 1.0f}, (Vec2f){1.0f, 1.0f},
-      &tex
-    );
-
-    Vec3f light = vec3f_normalize((Vec3f){-1.0f, 1.0f, 1.0f}); // light from top-right
-    draw_triangle_shaded(framebuffer,
-      (Vec2i){640, 100}, (Vec2i){900, 600}, (Vec2i){380, 600},
-      (Color){255, 100, 50},
-      light
     );
 
     draw_triangle_textured_perspective(framebuffer,
