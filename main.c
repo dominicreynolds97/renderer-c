@@ -340,7 +340,7 @@ void free_texture(Texture *t) {
 }
 
 Pixel sample_texture(Texture *t, float u, float v) {
-  if (v < 0) u = 0; if (u > 1) u = 1;
+  if (u < 0) u = 0; if (u > 1) u = 1;
   if (v < 0) v = 0; if (v > 1) v = 1;
 
   int x = (int)(u * (t->width - 1));
@@ -395,8 +395,8 @@ void draw_triangle_textured_perspective(Pixel *fb, Vec2i a, Vec2i b, Vec2i c,
       float one_over_w = bary.wa / wa + bary.wb / wb + bary.wc / wc;
 
 
-      float u = (bary.wa * uva.x + bary.wb * uvb.x + bary.wc * uvc.x) / one_over_w;
-      float v = (bary.wa * uva.y + bary.wb * uvb.y + bary.wc * uvc.y) / one_over_w;
+      float u = (bary.wa * uva.x / wa + bary.wb * uvb.x / wb + bary.wc * uvc.x / wc) / one_over_w;
+      float v = (bary.wa * uva.y / wa + bary.wb * uvb.y / wb + bary.wc * uvc.y / wc) / one_over_w;
 
       put_pixel(fb, x, y, sample_texture(tex, u, v));
     }
