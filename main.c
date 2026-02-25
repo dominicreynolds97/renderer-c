@@ -12,12 +12,44 @@
 typedef uint32_t Pixel;
 
 typedef struct {
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+} Color;
+
+typedef struct {
   int x;
   int y;
 } Vec2i;
 
+typedef struct {
+  float wa;
+  float wb;
+  float wc;
+} Barycentric;
+
+Barycentric barycentric(Vec2i a, Vec2i b, Vec2i c, Vec2i p) {
+  float wa = ((b.y - c.y) * (p.x - c.x) + (c.x - b.x) * (p.y - c.y)) /
+    (float)((b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y));
+
+  float wb = ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) /
+    (float)((b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y));
+
+  float wc = 1.0f - wa - wb;
+
+  return (Barycentric){wa, wb, wc};
+}
+
+int barycentric_inside(Barycentric b) {
+  return b.wa >= 0 && b.wb >= 0 && b.wc >= 0;
+}
+
 Pixel rgb(uint8_t r, uint8_t g, uint8_t b) {
   return (0xFF << 24) | (r << 16) | (g << 8) | b;
+}
+
+Pixel color_to_pixel(Color c) {
+  return rgb(c.r, c.g, c.b);
 }
 
 void put_pixel(Pixel *fb, int x, int y, Pixel color) {
@@ -204,6 +236,35 @@ void draw_triangle_filled(Pixel *fb, Vec2i a, Vec2i b, Vec2i c, Pixel color) {
   }
 }
 
+void draw_triangle_colored(Pixel *fb, Vec2i a, Vec2i b, Vec2i c, Color ca, Color cb, Color cc) {
+
+  int min_x = a.x < b.x
+    ? (a.x < c.x ? a.x : c.x)
+    : (b.x < c.x ? b.x : c.x );
+  int max_x = a.x > b.x
+    ? (a.x > c.x ? a.x : c.x)
+    : (b.x > c.x ? b.x : c.x );
+  int min_y = a.y < b.y
+    ? (a.y < c.y ? a.y : c.y)
+    : (b.y < c.y ? b.y : c.y );
+  int max_y = a.y > b.y
+    ? (a.y > c.y ? a.y : c.y)
+    : (b.y > c.y ? b.y : c.y );
+
+  for (int y = min_y; y <= max_y; y++) {
+    for (int x = min_x; x <= max_x; x++) {
+      Barycentric bary = barycentric(a, b, c, (Vec2i){x,y});
+      if (!barycentric_inside(bary)) continue;
+
+      uint8_t r = (uint8_t)(bary.wa * ca.r + bary.wb * cb.r + bary.wc * cc.r);
+      uint8_t g = (uint8_t)(bary.wa * ca.g + bary.wb * cb.g + bary.wc * cc.g);
+      uint8_t b = (uint8_t)(bary.wa * ca.b + bary.wb * cb.b + bary.wc * cc.b);
+
+      put_pixel(fb, x, y, rgb(r, g, b));
+    }
+  }
+}
+
 void clear(Pixel *fb, Pixel color) {
   for (int i = 0; i < WIDTH * HEIGHT; i++) {
     fb[i] = color;
@@ -222,6 +283,8 @@ int main(void) {
     SDL_WINDOWPOS_CENTERED,
     WIDTH, HEIGHT, 0
   );
+
+  SDL_RaiseWindow(window);
 
   SDL_Renderer *sdl_renderer = SDL_CreateRenderer(
     window, -1,
@@ -298,6 +361,14 @@ int main(void) {
       (Vec2i){900, 600},
       (Vec2i){380, 600},
       rgb(255, 0, 0)
+    );
+    draw_triangle_colored(framebuffer,
+      (Vec2i){640, 100},
+      (Vec2i){900, 600},
+      (Vec2i){380, 300},
+      (Color){255, 0,   0},
+      (Color){0,   255, 0},
+      (Color){0,   0,   255}
     );
 
     SDL_UpdateTexture(texture, NULL, framebuffer, WIDTH * sizeof(Pixel));
