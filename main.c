@@ -8,6 +8,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "src/Maths3D.h"
+
 #define WIDTH 1080
 #define HEIGHT 720
 
@@ -18,47 +20,6 @@ typedef struct {
   uint8_t g;
   uint8_t b;
 } Color;
-
-typedef struct {
-  int x;
-  int y;
-} Vec2i;
-
-typedef struct {
-  float x;
-  float y;
-} Vec2f;
-
-typedef struct {
-  float x;
-  float y;
-  float z;
-} Vec3f;
-
-Vec3f vec3f_sub(Vec3f a, Vec3f b) {
-  return (Vec3f){a.x - b.x, a.y - b.y, a.z - b.z};
-}
-
-Vec3f vec3f_cross(Vec3f a, Vec3f b) {
-  return (Vec3f) {
-    a.y * b.z - a.z * b.y,
-    a.z * b.x - a.x * b.z,
-    a.x * b.y - a.y * b.x
-  };
-}
-
-float vec3f_dot(Vec3f a, Vec3f b) {
-  return a.x * b.x + a.y * b.y + a.z * b.z;
-}
-
-float vec3f_length(Vec3f v) {
-  return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-}
-
-Vec3f vec3f_normalize(Vec3f v) {
-  float len = vec3f_length(v);
-  return (Vec3f){v.x / len, v.y / len, v.z / len};
-}
 
 float compute_light(Vec3f normal, Vec3f light_dir) {
   float intensity = vec3f_dot(normal, light_dir);
@@ -95,6 +56,14 @@ Pixel rgb(uint8_t r, uint8_t g, uint8_t b) {
 void put_pixel(Pixel *fb, int x, int y, Pixel color) {
   if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
   fb[y * WIDTH + x] = color;
+}
+
+void put_pizel_z(Pixel *fb, float *zb, int x, int y, float z, Pixel color) {
+  if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
+  int idx = y * WIDTH + x;
+  if (z >= zb[idx]) return;
+  zb[idx] = z;
+  fb[idx] = color;
 }
 
 void draw_line(Pixel *fb, Vec2i v0, Vec2i v1, Pixel color) {
@@ -290,6 +259,104 @@ void clear(Pixel *fb, Pixel color) {
   }
 }
 
+typedef struct {
+  Vec2i screen;
+  float depth;
+} ProjectedVertex;
+
+ProjectedVertex project(Vec3f vertex, Mat4 mvp) {
+  Vec4f v = mat4_mul_vec4(mvp, (Vec4f){vertex.x, vertex.y, vertex.z, 1.0f});
+
+  float inv_w = 1.0f / v.w;
+  float nx = v.x * inv_w;
+  float ny = v.y * inv_w;
+  float nz = v.z * inv_w;
+
+  int sx = (int)((nx + 1.0f) * 0.5f * WIDTH);
+  int sy = (int)((1.0f - ny) * 0.5f * HEIGHT);
+
+  return (ProjectedVertex){(Vec2i){sx, sy}, nz};
+}
+
+void draw_triangle_3d(Pixel *fb, float *zb,
+    ProjectedVertex a, ProjectedVertex b, ProjectedVertex c,
+    Color ca, Color cb, Color cc) {
+  Bounds bounds = get_triangle_bounds(a.screen, b.screen, c.screen);
+
+  for (int y = bounds.min.y; y <= bounds.max.y; y++) {
+    for (int x = bounds.min.x; x <= bounds.max.x; x++) {
+      Barycentric bary = barycentric(a.screen, b.screen, c.screen, (Vec2i){x,y});
+      if (!barycentric_inside(bary)) continue;
+
+      float z = bary.wa * a.depth + bary.wb * b.depth + bary.wc * c.depth;
+
+      uint8_t r = (uint8_t)(bary.wa * ca.r + bary.wb * cb.r + bary.wc * cc.r);
+      uint8_t g = (uint8_t)(bary.wa * ca.g + bary.wb * cb.g + bary.wc * cc.g);
+      uint8_t b = (uint8_t)(bary.wa * ca.b + bary.wb * cb.b + bary.wc * cc.b);
+
+      put_pizel_z(fb, zb, x, y, z, rgb(r, g, b));
+    }
+  }
+}
+
+
+Vec3f cube_vertices[8] = {
+  {-1, -1, -1}, { 1, -1, -1},
+  { 1,  1, -1}, {-1,  1, -1},
+  {-1, -1,  1}, { 1, -1,  1},
+  { 1,  1,  1}, {-1,  1,  1}
+};
+
+int cube_faces[12][3] = {
+  {0,1,2}, {0,2,3}, // back
+  {4,6,5}, {4,7,6}, // front
+  {0,4,5}, {0,5,1}, // bottom
+  {2,6,7}, {2,7,3}, // top
+  {0,3,7}, {0,7,4}, // left
+  {1,5,6}, {1,6,2}, // right
+};
+
+Color face_colors[6] = {
+    {255, 0,   0  },
+    {0,   255, 0  },
+    {0,   0,   255},
+    {255, 255, 0  },
+    {0,   255, 255},
+    {255, 0,   255},
+};
+
+void draw_cube(Pixel *fb, float *zb) {
+  float angle = SDL_GetTicks() / 1000.f;
+
+  Mat4 model = mat4_mul(
+    mat4_rotation_y(angle),
+    mat4_rotation_x(angle * 0.5f)
+  );
+  Mat4 view = mat4_translation(0, 0, -5.0f);
+  Mat4 proj = mat4_perspective(1.0f, (float)WIDTH / HEIGHT, 0.1f, 100.0f);
+  Mat4 mvp  = mat4_mul(proj, mat4_mul(view, model));
+
+  for (int i = 0; i < 12; i++) {
+    Vec3f v0 = cube_vertices[cube_faces[i][0]];
+    Vec3f v1 = cube_vertices[cube_faces[i][1]];
+    Vec3f v2 = cube_vertices[cube_faces[i][2]];
+
+    ProjectedVertex p0 = project(v0, mvp);
+    ProjectedVertex p1 = project(v1, mvp);
+    ProjectedVertex p2 = project(v2, mvp);
+
+    Color c = face_colors[i / 2];
+
+    draw_triangle_3d(fb, zb, p0, p1, p2, c, c, c);
+  }
+}
+
+void clear_zbuffer(float *zb) {
+  for (int i = 0; i < WIDTH * HEIGHT; i++) {
+    zb[i] = 1.0f;
+  }
+}
+
 int main(void) {
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
     printf("SDL_Init failed: %s\n", SDL_GetError());
@@ -318,7 +385,7 @@ int main(void) {
   );
 
   Pixel framebuffer[WIDTH * HEIGHT];
-  Texture tex = load_texture("Sprite-0001.png");
+  float zbuffer[WIDTH * HEIGHT];
 
   int running = 1;
   while (running) {
@@ -336,68 +403,14 @@ int main(void) {
     }
 
     clear(framebuffer, rgb(30, 30, 30));
+    clear_zbuffer(zbuffer);
 
-    draw_line(framebuffer,
-      (Vec2i){100, 100},
-      (Vec2i){600, 400},
-      rgb(255, 0, 0)
-    );
-
-    draw_rect(framebuffer,
-      (Vec2i){100, 50},
-      200,
-      150,
-      rgb(0, 255, 0)
-    );
-
-    draw_rect_filled(framebuffer,
-      (Vec2i){200, 100},
-      200,
-      150,
-      rgb(0, 0, 255)
-    );
-
-    draw_circle(framebuffer,
-      (Vec2i){700, 200},
-      50,
-      rgb(0, 255, 255)
-    );
-
-    draw_circle_filled(framebuffer,
-      (Vec2i){200, 300},
-      150,
-      rgb(0, 255, 255)
-    );
-
-    draw_triangle(framebuffer,
-      (Vec2i){640, 100},
-      (Vec2i){900, 600},
-      (Vec2i){380, 600},
-      rgb(255,255,0)
-    );
-
-    draw_triangle_colored(framebuffer,
-      (Vec2i){640, 100},
-      (Vec2i){900, 600},
-      (Vec2i){380, 300},
-      (Color){255, 0,   0},
-      (Color){0,   255, 0},
-      (Color){0,   0,   255}
-    );
-
-    draw_triangle_textured_perspective(framebuffer,
-      (Vec2i){200, 100}, (Vec2i){800, 100}, (Vec2i){500, 600},
-      (Vec2f){0.0f, 0.0f}, (Vec2f){1.0f, 0.0f}, (Vec2f){0.5f, 1.0f},
-      1.0f, 1.0f, 1.0f,
-      &tex
-    );
+    draw_cube(framebuffer, zbuffer);
 
     SDL_UpdateTexture(texture, NULL, framebuffer, WIDTH * sizeof(Pixel));
     SDL_RenderCopy(sdl_renderer, texture, NULL, NULL);
     SDL_RenderPresent(sdl_renderer);
   }
-
-  free_texture(&tex);
 
   SDL_DestroyTexture(texture);
   SDL_DestroyRenderer(sdl_renderer);
