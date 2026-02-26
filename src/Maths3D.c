@@ -26,6 +26,12 @@ Vec3f vec3f_normalize(Vec3f v) {
   return (Vec3f){v.x / len, v.y / len, v.z / len};
 }
 
+Vec3f compute_face_normal(Vec3f a, Vec3f b, Vec3f c) {
+  Vec3f edge1 = vec3f_sub(b, a);
+  Vec3f edge2 = vec3f_sub(c, a);
+  return vec3f_normalize(vec3f_cross(edge1, edge2));
+}
+
 Mat4 mat4_identity(void) {
   Mat4 m = {0};
   m.m[0][0] = 1.0f;
@@ -108,4 +114,9 @@ Mat4 mat4_perspective(float fov, float aspect, float near, float far) {
   m.m[2][3] = (2.0f * far * near) / (near - far);
   m.m[3][2] = -1.0f;
   return m;
+}
+
+int is_backface(Vec3f normal, Vec3f a, Vec3f camera_pos) {
+  Vec3f view_dir = vec3f_sub(a, camera_pos);
+  return vec3f_dot(normal, view_dir) >= 0;
 }

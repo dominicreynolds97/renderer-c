@@ -9,6 +9,7 @@
 #include "stb_image.h"
 
 #include "src/Maths3D.h"
+#include "src/Mesh.h"
 
 #define WIDTH 1080
 #define HEIGHT 720
@@ -299,7 +300,6 @@ void draw_triangle_3d(Pixel *fb, float *zb,
   }
 }
 
-
 Vec3f cube_vertices[8] = {
   {-1, -1, -1}, { 1, -1, -1},
   { 1,  1, -1}, {-1,  1, -1},
@@ -308,12 +308,12 @@ Vec3f cube_vertices[8] = {
 };
 
 int cube_faces[12][3] = {
-  {0,1,2}, {0,2,3}, // back
-  {4,6,5}, {4,7,6}, // front
-  {0,4,5}, {0,5,1}, // bottom
-  {2,6,7}, {2,7,3}, // top
-  {0,3,7}, {0,7,4}, // left
-  {1,5,6}, {1,6,2}, // right
+  {0,2,1}, {0,3,2}, // back
+  {4,5,6}, {4,6,7}, // front
+  {0,1,5}, {0,5,4}, // bottom
+  {2,3,7}, {2,7,6}, // top
+  {0,4,7}, {0,7,3}, // left
+  {1,2,6}, {1,6,5}, // right
 };
 
 Color face_colors[6] = {
@@ -325,29 +325,49 @@ Color face_colors[6] = {
     {255, 0,   255},
 };
 
-void draw_cube(Pixel *fb, float *zb) {
-  float angle = SDL_GetTicks() / 1000.f;
+void draw_mesh(Pixel *fb, float *zb, Mesh *mesh, Mat4 model) {
+  Vec3f light_dir = vec3f_normalize((Vec3f){0.3f, 1.0f, 0.7f});
+  Vec3f camera_pos = {0, 3.0f, 10.0f};
 
-  Mat4 model = mat4_mul(
-    mat4_rotation_y(angle),
-    mat4_rotation_x(angle * 0.5f)
-  );
-  Mat4 view = mat4_translation(0, 0, -5.0f);
+  Mat4 view = mat4_translation(-camera_pos.x, -camera_pos.y, -camera_pos.z);
   Mat4 proj = mat4_perspective(1.0f, (float)WIDTH / HEIGHT, 0.1f, 100.0f);
   Mat4 mvp  = mat4_mul(proj, mat4_mul(view, model));
 
-  for (int i = 0; i < 12; i++) {
-    Vec3f v0 = cube_vertices[cube_faces[i][0]];
-    Vec3f v1 = cube_vertices[cube_faces[i][1]];
-    Vec3f v2 = cube_vertices[cube_faces[i][2]];
+  for (int i = 0; i < mesh->face_count; i++) {
+    Vec3f v0 = mesh->vertices[mesh->faces[i][0]];
+    Vec3f v1 = mesh->vertices[mesh->faces[i][1]];
+    Vec3f v2 = mesh->vertices[mesh->faces[i][2]];
+
+    Vec4f w0 = mat4_mul_vec4(model, (Vec4f){v0.x, v0.y, v0.z, 1.0f});
+    Vec4f w1 = mat4_mul_vec4(model, (Vec4f){v1.x, v1.y, v1.z, 1.0f});
+    Vec4f w2 = mat4_mul_vec4(model, (Vec4f){v2.x, v2.y, v2.z, 1.0f});
+
+    Vec3f ws0 = {w0.x, w0.y, w0.z};
+    Vec3f ws1 = {w1.x, w1.y, w1.z};
+    Vec3f ws2 = {w2.x, w2.y, w2.z};
+
+    Vec3f normal = compute_face_normal(ws0, ws1, ws2);
+
+    if (is_backface(normal, ws0, camera_pos)) continue;
+
+    float ambient = 0.2f;
+    float diffuse = compute_light(normal, light_dir);
+    float intensity = ambient + (1.0f - ambient) * diffuse;
+
+    uint8_t c = (uint8_t)(255 * intensity);
+    Color lit = {c, c, c};
+   // Color base  = face_colors[i / 2];
+   // Color lit = {
+   //   (uint8_t)(base.r * intensity),
+   //   (uint8_t)(base.g * intensity),
+   //   (uint8_t)(base.b * intensity),
+   // };
 
     ProjectedVertex p0 = project(v0, mvp);
     ProjectedVertex p1 = project(v1, mvp);
     ProjectedVertex p2 = project(v2, mvp);
 
-    Color c = face_colors[i / 2];
-
-    draw_triangle_3d(fb, zb, p0, p1, p2, c, c, c);
+    draw_triangle_3d(fb, zb, p0, p1, p2, lit, lit, lit);
   }
 }
 
@@ -384,6 +404,8 @@ int main(void) {
     WIDTH, HEIGHT
   );
 
+  Mesh mesh = load_obj("house.obj");
+
   Pixel framebuffer[WIDTH * HEIGHT];
   float zbuffer[WIDTH * HEIGHT];
 
@@ -405,12 +427,20 @@ int main(void) {
     clear(framebuffer, rgb(30, 30, 30));
     clear_zbuffer(zbuffer);
 
-    draw_cube(framebuffer, zbuffer);
+    float angle = SDL_GetTicks() / 1000.f;
+    Mat4 model = mat4_mul(
+        mat4_rotation_y(angle),
+        mat4_scale(0.5f, 0.5f, 0.5f)
+    );
+
+    draw_mesh(framebuffer, zbuffer, &mesh, model);
 
     SDL_UpdateTexture(texture, NULL, framebuffer, WIDTH * sizeof(Pixel));
     SDL_RenderCopy(sdl_renderer, texture, NULL, NULL);
     SDL_RenderPresent(sdl_renderer);
   }
+
+  free_mesh(&mesh);
 
   SDL_DestroyTexture(texture);
   SDL_DestroyRenderer(sdl_renderer);
