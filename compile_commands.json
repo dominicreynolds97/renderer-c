@@ -2,13 +2,57 @@
   {
     "file": "main.c",
     "arguments": [
-      "gcc",
+      "clang",
       "-Wall",
       "-Wextra",
       "-std=c11",
-      "-I/opt/homebrew/include/SDL2",
-      "-D_THREAD_SAFE",
+      "-I/opt/homebrew/Cellar/glfw/3.4/include",
       "main.c",
+      "-o",
+      "renderer"
+    ],
+    "directory": "/Users/dominicreynolds/Development/renderer-c",
+    "output": "renderer"
+  },
+  {
+    "file": "src/Maths3D.c",
+    "arguments": [
+      "clang",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I/opt/homebrew/Cellar/glfw/3.4/include",
+      "src/Maths3D.c",
+      "-o",
+      "renderer"
+    ],
+    "directory": "/Users/dominicreynolds/Development/renderer-c",
+    "output": "renderer"
+  },
+  {
+    "file": "src/Mesh.c",
+    "arguments": [
+      "clang",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I/opt/homebrew/Cellar/glfw/3.4/include",
+      "src/Mesh.c",
+      "-o",
+      "renderer"
+    ],
+    "directory": "/Users/dominicreynolds/Development/renderer-c",
+    "output": "renderer"
+  },
+  {
+    "file": "src/Shader.c",
+    "arguments": [
+      "clang",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I/opt/homebrew/Cellar/glfw/3.4/include",
+      "src/Shader.c",
       "-o",
       "renderer"
     ],
