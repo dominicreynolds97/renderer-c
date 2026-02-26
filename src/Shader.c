@@ -72,7 +72,11 @@ void shader_free(GLuint program) {
 }
 
 void shader_set_mat4(GLuint program, const char *name, const float *mat) {
-  glUniformMatrix4fv(glGetUniformLocation(program, name), 1, GL_FALSE, mat);
+  glUniformMatrix4fv(glGetUniformLocation(program, name), 1, GL_TRUE, mat);
+}
+
+void shader_set_vec3(GLuint program, const char *name, float x, float y, float z) {
+  glUniform3f(glGetUniformLocation(program, name), x, y, z);
 }
 
 void shader_set_int(GLuint program, const char *name, int value) {

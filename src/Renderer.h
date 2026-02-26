@@ -3,12 +3,14 @@
 
 #include <GL/glew.h>
 #include "Mesh.h"
-#include "Maths3D.h"
+
+#define MAX_MESHES 100
 
 typedef struct {
+  int mesh_id;
   GLuint vao;
   GLuint vbo;
-  GLuint vco;
+  GLuint ebo;
   int index_count;
 } RenderMesh;
 

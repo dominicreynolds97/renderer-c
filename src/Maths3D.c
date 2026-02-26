@@ -26,6 +26,14 @@ Vec3f vec3f_normalize(Vec3f v) {
   return (Vec3f){v.x / len, v.y / len, v.z / len};
 }
 
+Vec3f vec3f_add(Vec3f a, Vec3f b) {
+  return (Vec3f){a.x + b.x, a.y + b.y, a.z + b.z};
+}
+
+Vec3f vec3f_scale(Vec3f v, float s) {
+  return (Vec3f){v.x * s, v.y * s, v.z * s};
+}
+
 Vec3f compute_face_normal(Vec3f a, Vec3f b, Vec3f c) {
   Vec3f edge1 = vec3f_sub(b, a);
   Vec3f edge2 = vec3f_sub(c, a);
@@ -114,6 +122,21 @@ Mat4 mat4_perspective(float fov, float aspect, float near, float far) {
   m.m[2][3] = (2.0f * far * near) / (near - far);
   m.m[3][2] = -1.0f;
   return m;
+}
+
+Mat4 mat4_look_at(Vec3f eye, Vec3f target, Vec3f up) {
+    Vec3f f = vec3f_normalize(vec3f_sub(target, eye)); // forward
+    Vec3f r = vec3f_normalize(vec3f_cross(f, up));     // right
+    Vec3f u = vec3f_cross(r, f);                       // up
+
+    Mat4 m = mat4_identity();
+    m.m[0][0] =  r.x; m.m[0][1] =  r.y; m.m[0][2] =  r.z;
+    m.m[1][0] =  u.x; m.m[1][1] =  u.y; m.m[1][2] =  u.z;
+    m.m[2][0] = -f.x; m.m[2][1] = -f.y; m.m[2][2] = -f.z;
+    m.m[0][3] = -vec3f_dot(r, eye);
+    m.m[1][3] = -vec3f_dot(u, eye);
+    m.m[2][3] =  vec3f_dot(f, eye);
+    return m;
 }
 
 int is_backface(Vec3f normal, Vec3f a, Vec3f camera_pos) {

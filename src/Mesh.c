@@ -1,4 +1,5 @@
 #include "Mesh.h"
+#include "Maths3D.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,6 +60,32 @@ Mesh load_obj(const char *path) {
 
   free(raw_verts);
 
+  mesh.normals = calloc(mesh.vertex_count, sizeof(Vec3f));
+
+  for (int i = 0; i< mesh.face_count; i++) {
+    Vec3f v0 = mesh.vertices[mesh.faces[i][0]];
+    Vec3f v1 = mesh.vertices[mesh.faces[i][1]];
+    Vec3f v2 = mesh.vertices[mesh.faces[i][2]];
+
+    Vec3f normal = compute_face_normal(v0, v1, v2);
+
+    mesh.normals[mesh.faces[i][0]].x += normal.x;
+    mesh.normals[mesh.faces[i][0]].y += normal.y;
+    mesh.normals[mesh.faces[i][0]].z += normal.z;
+
+    mesh.normals[mesh.faces[i][1]].x += normal.x;
+    mesh.normals[mesh.faces[i][1]].y += normal.y;
+    mesh.normals[mesh.faces[i][1]].z += normal.z;
+
+    mesh.normals[mesh.faces[i][2]].x += normal.x;
+    mesh.normals[mesh.faces[i][2]].y += normal.y;
+    mesh.normals[mesh.faces[i][2]].z += normal.z;
+  }
+
+  for (int i = 0; i < mesh.vertex_count; i++) {
+    mesh.normals[i] = vec3f_normalize(mesh.normals[i]);
+  }
+
   printf("Loaded %d vertices, %d triangles \n", mesh.vertex_count, mesh.face_count);
   return mesh;
 }
@@ -66,5 +93,6 @@ Mesh load_obj(const char *path) {
 void free_mesh(Mesh *mesh) {
   free(mesh->vertices);
   free(mesh->faces);
+  free(mesh->normals);
 }
 

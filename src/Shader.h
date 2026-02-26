@@ -8,6 +8,7 @@ void    shader_use(GLuint program);
 void    shader_free(GLuint program);
 
 void shader_set_mat4(GLuint program, const char *name, const float *mat);
+void shader_set_vec3(GLuint program, const char *name, float x, float y, float z);
 void shader_set_int(GLuint program, const char *name, const int value);
 void shader_set_float(GLuint program, const char *name, const float value);
 
