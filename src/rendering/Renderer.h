@@ -2,9 +2,7 @@
 #define RENDERER_H
 
 #include <GL/glew.h>
-#include "Mesh.h"
-
-#define MAX_MESHES 100
+#include "../assets/Mesh.h"
 
 typedef struct {
   int mesh_id;

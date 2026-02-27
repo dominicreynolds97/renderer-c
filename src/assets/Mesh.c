@@ -1,5 +1,4 @@
 #include "Mesh.h"
-#include "Maths3D.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,7 +1,7 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "Maths3D.h"
+#include "../maths/Maths3D.h"
 
 typedef struct {
   Vec3f *vertices;
