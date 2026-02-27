@@ -29,37 +29,25 @@ typedef struct {
 } Mat4;
 
 Vec3f vec3f_sub(Vec3f a, Vec3f b);
-
 Vec3f vec3f_cross(Vec3f a, Vec3f b);
-
 float vec3f_dot(Vec3f a, Vec3f b);
-
 float vec3f_length(Vec3f v);
-
 Vec3f vec3f_normalize(Vec3f v);
-
 Vec3f vec3f_add(Vec3f a, Vec3f b);
-
 Vec3f vec3f_scale(Vec3f v, float s);
-
 Vec3f compute_face_normal(Vec3f a, Vec3f b, Vec3f c);
-
 Vec4f mat4_mul_vec4(Mat4 m, Vec4f v);
+Vec3f vec3f_identity();
 
+Mat4 mat4_identity();
 Mat4 mat4_mul(Mat4 a, Mat4 b);
-
 Mat4 mat4_scale(float x, float y, float z);
-
 Mat4 mat4_translation(float x, float y, float z);
-
 Mat4 mat4_rotation_y(float angle);
-
 Mat4 mat4_rotation_x(float angle);
-
 Mat4 mat4_rotation_z(float angle);
-
+Mat4 mat4_rotation(Vec3f rotate);
 Mat4 mat4_perspective(float fov, float aspect, float near, float far);
-
 Mat4 mat4_look_at(Vec3f eye, Vec3f target, Vec3f up);
 
 int is_backface(Vec3f normal, Vec3f a, Vec3f camera_pos);
