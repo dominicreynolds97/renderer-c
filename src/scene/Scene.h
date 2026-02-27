@@ -2,22 +2,21 @@
 #define SCENE_H
 
 #include "../app/App.h"
-#include "../rendering/Renderer.h"
+#include "Registry.h"
 #include "camera.h"
 
-#define MAX_MESHES 16
 #define MAX_OBJECTS 64
 
 typedef struct {
   int mesh_id;
-  //Vec3f color;
+  int mat_id;
   Mat4 transform;
 } SceneObject;
 
 typedef struct {
-  int mesh_count;
   int object_count;
-  RenderMesh meshes[MAX_MESHES];
+  MeshRegistry mesh_registry;
+  MaterialRegistry material_registry;
   SceneObject objects[MAX_OBJECTS];
   Camera camera;
 } Scene;
