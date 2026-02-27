@@ -12,8 +12,7 @@ typedef struct {
   int         height;
 } App;
 
-App app_create(int width, int height);
-int app_check_init_state(App *app);
+int app_create(App *app, int width, int height);
 void app_run(App *app);
 void app_destroy(App *app);
 

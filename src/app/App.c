@@ -5,27 +5,42 @@
 #include "../scene/Scene.h"
 #include "Input.h"
 
-App app_create(int width, int height) {
-  App app = {0};
-  app.width = width;
-  app.height = height;
+const char* APP_NAME = "Renderer";
 
-  if (!glfwInit()) {
-    printf("GLFW init failed\n");
-    return app;
-  }
+void setup_cursor_callback(App *app, Scene *scene) {
+  glfwSetWindowUserPointer(app->window, &scene->camera);
+  glfwSetCursorPosCallback(app->window, mouse_callback);
+}
 
+void setup_window_hints() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
+}
 
-  GLFWwindow *window = glfwCreateWindow(width, height, "Renderer", NULL, NULL);
+void setup_depth() {
+  glEnable(GL_DEPTH_TEST);
+  glPolygonOffset(1.0f, 1.0f);
+}
+
+int app_create(App *app, int width, int height) {
+  app->width = width;
+  app->height = height;
+
+  if (!glfwInit()) {
+    printf("GLFW init failed\n");
+    return 1;
+  }
+
+  setup_window_hints();
+
+  GLFWwindow *window = glfwCreateWindow(width, height, APP_NAME, NULL, NULL);
   if (!window) {
     printf("Window creation failed\n");
     glfwTerminate();
-    return app;
+    return 1;
   }
 
   glfwMakeContextCurrent(window);
@@ -36,34 +51,28 @@ App app_create(int width, int height) {
   if (glewInit() != GLEW_OK) {
     printf("GLEW init failed\n");
     glfwTerminate();
-    return app;
+    return 1;
   }
 
   printf("OpenGL: %s\n", glGetString(GL_VERSION));
 
   GLuint shader = shader_load("shaders/mesh.vert", "shaders/mesh.frag");
-  glEnable(GL_DEPTH_TEST);
-  glPolygonOffset(1.0f, 1.0f);
+
+  setup_depth();
 
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-  app.window = window;
-  app.shader = shader;
+  app->window = window;
+  app->shader = shader;
 
-  return app;
-}
-
-int app_check_init_state(App *app) {
-  if (app->shader == 0 || app->window == 0) return 0;
-  return 1;
+  return 0;
 }
 
 void app_run(App *app) {
   Scene scene;
   scene_create(&scene);
 
-  glfwSetWindowUserPointer(app->window, &scene.camera);
-  glfwSetCursorPosCallback(app->window, mouse_callback);
+  setup_cursor_callback(app, &scene);
 
   float last_frame_time = glfwGetTime();
 

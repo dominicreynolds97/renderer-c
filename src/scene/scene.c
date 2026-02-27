@@ -14,9 +14,9 @@ void scene_create(Scene *scene) {
   Mesh sphere = load_obj("meshes/sphere.obj");
   Mesh cylinder = load_obj("meshes/cylinder.obj");
 
-  scene->meshes[0] = renderer_upload_mesh(&cube);
-  scene->meshes[1] = renderer_upload_mesh(&sphere);
-  scene->meshes[2] = renderer_upload_mesh(&cylinder);
+  scene->meshes[CUBE] = renderer_upload_mesh(&cube);
+  scene->meshes[SPHERE] = renderer_upload_mesh(&sphere);
+  scene->meshes[CYLINDER] = renderer_upload_mesh(&cylinder);
   scene->mesh_count = 3;
 
   free_mesh(&cube);
