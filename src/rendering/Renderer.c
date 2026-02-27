@@ -2,9 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-RenderMesh renderer_upload_mesh(Mesh *mesh) {
-  RenderMesh rm = {0};
-
+float* get_vertex_data(Mesh *mesh) {
   float *vertex_data = malloc(mesh->vertex_count * 6 * sizeof(float));
   for (int i = 0; i < mesh->vertex_count; i++) {
     vertex_data[i * 6 + 0] = mesh->vertices[i].x;
@@ -14,22 +12,24 @@ RenderMesh renderer_upload_mesh(Mesh *mesh) {
     vertex_data[i * 6 + 4] = mesh->normals[i].y;
     vertex_data[i * 6 + 5] = mesh->normals[i].z;
   }
+  return vertex_data;
+}
 
+int* get_indices(Mesh *mesh) {
   int *indices = malloc(mesh->face_count * 3 * sizeof(int));
   for (int i = 0; i< mesh->face_count; i++) {
     indices[i * 3 + 0] = (unsigned int)mesh->faces[i][0];
     indices[i * 3 + 1] = (unsigned int)mesh->faces[i][1];
     indices[i * 3 + 2] = (unsigned int)mesh->faces[i][2];
   }
+  return indices;
+}
 
-  printf("vertex_count: %d, face_count: %d\n", mesh->vertex_count, mesh->face_count);
+RenderMesh renderer_upload_mesh(Mesh *mesh) {
+  RenderMesh rm = {0};
 
-  // verify no index is out of bounds
-  for (int i = 0; i < mesh->face_count * 3; i++) {
-      if (indices[i] < 0 || indices[i] >= mesh->vertex_count) {
-          printf("BAD INDEX at %d: %d (max %d)\n", i, indices[i], mesh->vertex_count - 1);
-      }
-  }
+  float* vertex_data = get_vertex_data(mesh);
+  int* indices = get_indices(mesh);
 
   glGenVertexArrays(1, &rm.vao);
   glGenBuffers(1, &rm.vbo);

@@ -8,6 +8,7 @@ static char *read_file(const char *path) {
     printf("Shader: could not open: %s\n", path);
     return NULL;
   }
+
   fseek(f, 0, SEEK_END);
   long size = ftell(f);
   rewind(f);
