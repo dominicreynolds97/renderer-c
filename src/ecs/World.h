@@ -9,9 +9,21 @@ typedef int Entity;
 
 typedef struct {
   Entity  entity;
-  Mat4    transform;
+  Vec3f   position;
   UT_hash_handle hh;
-} TransformComponent;
+} PositionComponent;
+
+typedef struct {
+  Entity  entity;
+  Vec3f   rotation;
+  UT_hash_handle hh;
+} RotationComponent;
+
+typedef struct {
+  Entity  entity;
+  Vec3f   scale;
+  UT_hash_handle hh;
+} ScaleComponent;
 
 typedef struct {
   Entity  entity;
@@ -28,7 +40,9 @@ typedef struct {
 typedef struct {
   int next_id;
 
-  TransformComponent  *transforms;
+  PositionComponent   *positions;
+  RotationComponent   *rotations;
+  ScaleComponent      *scales;
   MeshComponent       *meshes;
   MaterialComponent   *materials;
 
@@ -39,13 +53,18 @@ typedef struct {
 void world_init(World *world);
 Entity world_create_entity(World *world);
 
-void world_add_transform(World *world, Entity e, Mat4 transform);
+void world_add_position(World *world, Entity e, Vec3f position);
+void world_add_rotation(World *world, Entity e, Vec3f rotation);
+void world_add_scale(World *world, Entity e, Vec3f scale);
 void world_add_material(World *world, Entity e, int mesh_id);
 void world_add_mesh(World *world, Entity e, int mesh_id);
 
-TransformComponent* world_get_transform(World *world, Entity e);
+PositionComponent* world_get_position(World *world, Entity e);
+RotationComponent* world_get_rotation(World *world, Entity e);
+ScaleComponent* world_get_scale(World *world, Entity e);
 MaterialComponent* world_get_material(World *world, Entity e);
 MeshComponent* world_get_mesh(World *world, Entity e);
+Mat4 world_get_transform(World *world, Entity e);
 
 void world_destroy_entity(World *world, Entity e);
 void world_destroy(World *world);

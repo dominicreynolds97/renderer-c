@@ -1,7 +1,8 @@
 #include "Registry.h"
 
 Material DEFAULT_MATERIAL = {
-  (Vec3f){1.0f, 1.0f, 1.0f}
+  (Vec3f){1.0f, 1.0f, 1.0f},
+  0
 };
 
 void mesh_reg_init(MeshRegistry *mesh_registry) {

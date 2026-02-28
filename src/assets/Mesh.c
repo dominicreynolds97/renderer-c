@@ -133,6 +133,10 @@ Mesh load_obj(const char *path) {
     }
   }
 
+  if (!has_uvs) {
+    memset(out_uv, 0, vertex_count * sizeof(Vec2f));
+  }
+
   mesh.positions    = out_pos;
   mesh.normals      = out_nrm;
   mesh.uvs          = out_uv;

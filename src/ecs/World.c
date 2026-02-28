@@ -1,11 +1,13 @@
 #include "World.h"
-#include "scene/Registry.h"
+#include "maths/Maths3D.h"
 
 void world_init(World *world) {
-  world->next_id = 0;
-  world->transforms = NULL;
-  world->meshes = NULL;
-  world->materials = NULL;
+  world->next_id    = 0;
+  world->positions  = NULL;
+  world->rotations  = NULL;
+  world->scales     = NULL;
+  world->meshes     = NULL;
+  world->materials  = NULL;
 
   mesh_reg_init(&world->mesh_registry);
   mat_reg_init(&world->material_registry);
@@ -16,11 +18,25 @@ Entity world_create_entity(World *world) {
 }
 
 
-void world_add_transform(World *world, Entity e, Mat4 transform) {
-  TransformComponent *c = malloc(sizeof(TransformComponent));
+void world_add_position(World *world, Entity e, Vec3f position) {
+  PositionComponent *c = malloc(sizeof(PositionComponent));
   c->entity = e;
-  c->transform = transform;
-  HASH_ADD_INT(world->transforms, entity, c);
+  c->position = position;
+  HASH_ADD_INT(world->positions, entity, c);
+}
+
+void world_add_rotation(World *world, Entity e, Vec3f rotation) {
+  RotationComponent *c = malloc(sizeof(RotationComponent));
+  c->entity = e;
+  c->rotation = rotation;
+  HASH_ADD_INT(world->rotations, entity, c);
+}
+
+void world_add_scale(World *world, Entity e, Vec3f scale) {
+  ScaleComponent *c = malloc(sizeof(ScaleComponent));
+  c->entity = e;
+  c->scale = scale;
+  HASH_ADD_INT(world->scales, entity, c);
 }
 
 void world_add_material(World *world, Entity e, int mat_id) {
@@ -38,9 +54,21 @@ void world_add_mesh(World *world, Entity e, int mesh_id) {
 }
 
 
-TransformComponent* world_get_transform(World *world, Entity e) {
-  TransformComponent *c;
-  HASH_FIND_INT(world->transforms, &e, c);
+PositionComponent* world_get_position(World *world, Entity e) {
+  PositionComponent *c;
+  HASH_FIND_INT(world->positions, &e, c);
+  return c;
+}
+
+RotationComponent* world_get_rotation(World *world, Entity e) {
+  RotationComponent *c;
+  HASH_FIND_INT(world->rotations, &e, c);
+  return c;
+}
+
+ScaleComponent* world_get_scale(World *world, Entity e) {
+  ScaleComponent *c;
+  HASH_FIND_INT(world->scales, &e, c);
   return c;
 }
 
@@ -56,26 +84,62 @@ MeshComponent* world_get_mesh(World *world, Entity e) {
   return c;
 }
 
+Mat4 world_get_transform(World *world, Entity e) {
+  PositionComponent *pc = world_get_position(world, e);
+  RotationComponent *rc = world_get_rotation(world, e);
+  ScaleComponent    *sc = world_get_scale(world, e);
 
-void destroy_transform(World *world, TransformComponent *c) {
-  HASH_DEL(world->transforms, c);
+  Vec3f position = pc ? pc->position : vec3f_identity();
+  Vec3f rotation = rc ? rc->rotation : vec3f_identity();
+  Vec3f scale    = sc ? sc->scale    : (Vec3f){1.0f, 1.0f, 1.0f};
+
+  Mat4 transform = mat4_mul(
+    mat4_translation(position.x, position.y, position.z),
+    mat4_mul(
+      mat4_rotation(rotation),
+      mat4_scale(scale.x, scale.y, scale.z)
+    )
+  );
+
+  return transform;
+}
+
+
+static void destroy_position(World *world, PositionComponent *c) {
+  HASH_DEL(world->positions, c);
   free(c);
 }
 
-void destroy_mesh(World *world, MeshComponent *c) {
+static void destroy_rotation(World *world, RotationComponent *c) {
+  HASH_DEL(world->rotations, c);
+  free(c);
+}
+
+static void destroy_scale(World *world, ScaleComponent *c) {
+  HASH_DEL(world->scales, c);
+  free(c);
+}
+
+static void destroy_mesh(World *world, MeshComponent *c) {
   HASH_DEL(world->meshes, c);
   free(c);
 }
 
-void destroy_material(World *world, MaterialComponent *c) {
+static void destroy_material(World *world, MaterialComponent *c) {
   HASH_DEL(world->materials, c);
   free(c);
 }
 
 
 void world_destroy_entity(World *world, Entity e) {
-  TransformComponent *t = world_get_transform(world, e);
-  if (t) destroy_transform(world, t);
+  PositionComponent *p = world_get_position(world, e);
+  if (p) destroy_position(world, p);
+
+  RotationComponent *r = world_get_rotation(world, e);
+  if (r) destroy_rotation(world, r);
+
+  ScaleComponent *s = world_get_scale(world, e);
+  if (s) destroy_scale(world, s);
 
   MeshComponent *mesh = world_get_mesh(world, e);
   if (mesh) destroy_mesh(world, mesh);
@@ -85,14 +149,20 @@ void world_destroy_entity(World *world, Entity e) {
 }
 
 void world_destroy(World *world) {
-  TransformComponent *t, *tmp1;
-  HASH_ITER(hh, world->transforms, t, tmp1) { destroy_transform(world, t); }
+  PositionComponent *p, *tmp1;
+  HASH_ITER(hh, world->positions, p, tmp1) { destroy_position(world, p); }
 
-  MeshComponent *mesh, *tmp2;
-  HASH_ITER(hh, world->meshes, mesh, tmp2) { destroy_mesh(world, mesh); }
+  RotationComponent *r, *tmp2;
+  HASH_ITER(hh, world->rotations, r, tmp2) { destroy_rotation(world, r); }
 
-  MaterialComponent *mat, *tmp3;
-  HASH_ITER(hh, world->materials, mat, tmp3) { destroy_material(world, mat); }
+  ScaleComponent *s, *tmp3;
+  HASH_ITER(hh, world->scales, s, tmp3) { destroy_scale(world, s); }
+
+  MeshComponent *mesh, *tmp4;
+  HASH_ITER(hh, world->meshes, mesh, tmp4) { destroy_mesh(world, mesh); }
+
+  MaterialComponent *mat, *tmp5;
+  HASH_ITER(hh, world->materials, mat, tmp5) { destroy_material(world, mat); }
 
   world->next_id = 0;
 

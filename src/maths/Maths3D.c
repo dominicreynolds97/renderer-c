@@ -34,6 +34,10 @@ Vec3f vec3f_scale(Vec3f v, float s) {
   return (Vec3f){v.x * s, v.y * s, v.z * s};
 }
 
+Vec3f vec3f_product(Vec3f a, Vec3f b) {
+  return (Vec3f){a.x * b.x, a.y * b.y, a.z * b.z};
+}
+
 Vec3f compute_face_normal(Vec3f a, Vec3f b, Vec3f c) {
   Vec3f edge1 = vec3f_sub(b, a);
   Vec3f edge2 = vec3f_sub(c, a);

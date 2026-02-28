@@ -3,9 +3,12 @@
 #include "../assets/Mesh.h"
 #include "../rendering/Shader.h"
 #include "Registry.h"
+#include "app/App.h"
+#include "assets/Texture.h"
 #include "camera.h"
 #include "ecs/World.h"
 #include "maths/Maths3D.h"
+#include "rendering/Renderer.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -53,7 +56,7 @@ int parse_scene_file(Scene *scene, char* filepath) {
 
   Material current_material = {0};
 
-  Vec3f translate = vec3f_identity();
+  Vec3f position = vec3f_identity();
   Vec3f rotation = vec3f_identity();
   Vec3f scale = {1.0f, 1.0f, 1.0f};
 
@@ -102,6 +105,11 @@ int parse_scene_file(Scene *scene, char* filepath) {
           sscanf(line, "color %f %f %f", &color.x, &color.y, &color.z);
           current_material.color = color;
         }
+        if (strncmp(line, "texture", 7) == 0) {
+          char path[256];
+          sscanf(line, "texture %s", path);
+          current_material.texture_id = texture_load(path);
+        }
         if (strncmp(line, "end", 3) == 0) {
           mat_reg_add(&scene->world.material_registry, current_material);
           current_material = (Material){0};
@@ -110,11 +118,11 @@ int parse_scene_file(Scene *scene, char* filepath) {
         }
         break;
       case(IN_OBJECT):
-        if (strncmp(line, "translate", 9) == 0) {
+        if (strncmp(line, "position", 8) == 0) {
           Vec3f t;
-          sscanf(line, "translate %f %f %f", &t.x, &t.y, &t.z);
+          sscanf(line, "position %f %f %f", &t.x, &t.y, &t.z);
 
-          translate = vec3f_add(translate, t);
+          position = vec3f_add(position, t);
         }
         if (strncmp(line, "rotation", 8) == 0) {
           Vec3f r;
@@ -124,25 +132,22 @@ int parse_scene_file(Scene *scene, char* filepath) {
         if (strncmp(line, "scale", 5) == 0) {
           Vec3f s;
           sscanf(line, "scale %f %f %f", &s.x, &s.y, &s.z);
-          scale = vec3f_add(scale, s);
+          scale = vec3f_product(scale, s);
         }
         if (strncmp(line, "end", 3) == 0) {
           int mesh_id = find_id(mesh_names, scene->world.mesh_registry.count, current_mesh_name);
           int mat_id = find_id(material_names, scene->world.material_registry.count, current_mat_name);
-          Mat4 transform = mat4_mul(
-            mat4_translation(translate.x, translate.y, translate.z),
-            mat4_mul(
-              mat4_rotation(rotation),
-              mat4_scale(scale.x, scale.y, scale.z)
-            )
-          );
 
           Entity e = world_create_entity(&scene->world);
-          world_add_transform(&scene->world, e, transform);
+
+          world_add_position(&scene->world, e, position);
+          world_add_rotation(&scene->world, e, rotation);
+          world_add_scale(&scene->world, e, scale);
+
           if (mesh_id >= 0) world_add_mesh(&scene->world, e, mesh_id);
           if (mat_id >= 0) world_add_material(&scene->world, e, mat_id);
 
-          translate = vec3f_identity();
+          position = vec3f_identity();
           rotation = vec3f_identity();
           scale = (Vec3f){1.0f, 1.0f, 1.0f};
 
@@ -194,12 +199,21 @@ void scene_render(Scene *scene, App *app) {
 
     if (!mesh) continue;
 
-    TransformComponent *tc = world_get_transform(&scene->world, e);
-    Mat4 transform = tc != NULL ? tc->transform : mat4_identity();
+    Mat4 transform = world_get_transform(&scene->world, e);
 
     Mat4 mvp = mat4_mul(proj, mat4_mul(view, transform));
     shader_set_mat4(app->shader, "u_mvp", &mvp.m[0][0]);
     shader_set_mat4(app->shader, "u_model", &transform.m[0][0]);
+
+    if (mat->texture_id) {
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, mat->texture_id);
+      glUniform1i(glGetUniformLocation(app->shader, "u_has_texture"), 1);
+      glUniform1i(glGetUniformLocation(app->shader, "u_texture"), 0);
+    } else {
+      glUniform1i(glGetUniformLocation(app->shader, "u_has_texture"), 0);
+      glUniform1i(glGetUniformLocation(app->shader, "u_texture"), 0);
+    }
 
     renderer_draw(mesh, app->shader);
   }

@@ -9,7 +9,8 @@
 #define MAX_MATERIALS 16
 
 typedef struct {
-  Vec3f color;
+  Vec3f       color;
+  GLuint      texture_id;
 } Material;
 
 typedef struct {
@@ -18,17 +19,21 @@ typedef struct {
 } MeshRegistry;
 
 typedef struct {
-  Material  items[MAX_MATERIALS];
-  int       count;
+  Material    items[MAX_MATERIALS];
+  int         count;
 } MaterialRegistry;
 
-void        mesh_reg_init(MeshRegistry *mesh_registry);
-int         mesh_reg_add(MeshRegistry *mesh_registry, RenderMesh item);
-RenderMesh* mesh_reg_get(MeshRegistry *mesh_registry, int id);
-void        mesh_reg_destroy(MeshRegistry *mesh_registry);
-void        mat_reg_init(MaterialRegistry *material_registry);
-int         mat_reg_add(MaterialRegistry *material_registry, Material item);
-Material*   mat_reg_get(MaterialRegistry *material_registry, int id);
-void        mat_reg_destroy(MaterialRegistry *material_registry);
+
+void          mesh_reg_init(MeshRegistry *mesh_registry);
+void          mat_reg_init(MaterialRegistry *material_registry);
+
+RenderMesh*   mesh_reg_get(MeshRegistry *mesh_registry, int id);
+Material*     mat_reg_get(MaterialRegistry *material_registry, int id);
+
+int           mesh_reg_add(MeshRegistry *mesh_registry, RenderMesh item);
+int           mat_reg_add(MaterialRegistry *material_registry, Material item);
+
+void          mesh_reg_destroy(MeshRegistry *mesh_registry);
+void          mat_reg_destroy(MaterialRegistry *material_registry);
 
 #endif
