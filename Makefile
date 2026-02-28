@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -Wall -Wextra -std=c11 $(shell pkg-config --cflags glfw3) -I/opt/homebrew/include
+CFLAGS = -Wall -Wextra -std=c11 $(shell pkg-config --cflags glfw3) -I/opt/homebrew/include -I src
 LIBS = $(shell pkg-config --libs glfw3) -lGLEW -framework OpenGL -L/opt/homebrew/lib
 
 TARGET = renderer

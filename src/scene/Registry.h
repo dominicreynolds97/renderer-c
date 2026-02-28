@@ -1,8 +1,8 @@
 #ifndef REGISTRY_H
 #define REGISTRY_H
 
-#include "../maths/Maths3D.h"
-#include "../rendering/Renderer.h"
+#include "maths/Maths3D.h"
+#include "rendering/Renderer.h"
 #include <stdio.h>
 
 #define MAX_MESHES 16

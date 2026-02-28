@@ -1,7 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "../maths/Maths3D.h"
+#include "maths/Maths3D.h"
 
 extern const Vec3f UP;
 

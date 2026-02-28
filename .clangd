@@ -1,4 +1,5 @@
 CompileFlags:
   Add:
+    - -I src
     - -I/opt/homebrew/include
     - -I/opt/homebrew/include/GL

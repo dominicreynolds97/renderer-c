@@ -1,7 +1,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "../app/App.h"
+#include "app/App.h"
 #include "Registry.h"
 #include "camera.h"
 

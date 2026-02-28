@@ -2,7 +2,7 @@
 #define RENDERER_H
 
 #include <GL/glew.h>
-#include "../assets/Mesh.h"
+#include "assets/Mesh.h"
 
 typedef struct {
   int mesh_id;

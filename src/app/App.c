@@ -1,8 +1,8 @@
 #include "App.h"
 #include <stdio.h>
 
-#include "../rendering/Shader.h"
-#include "../scene/Scene.h"
+#include "rendering/Shader.h"
+#include "scene/Scene.h"
 #include "Input.h"
 
 const char* APP_NAME = "Renderer";

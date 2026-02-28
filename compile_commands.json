@@ -7,6 +7,9 @@
       "-Wextra",
       "-std=c11",
       "-I/opt/homebrew/Cellar/glfw/3.4/include",
+      "-I/opt/homebrew/include",
+      "-I",
+      "src",
       "main.c",
       "-o",
       "renderer"
@@ -15,14 +18,17 @@
     "output": "renderer"
   },
   {
-    "file": "src/Maths3D.c",
+    "file": "src/app/App.c",
     "arguments": [
       "clang",
       "-Wall",
       "-Wextra",
       "-std=c11",
       "-I/opt/homebrew/Cellar/glfw/3.4/include",
-      "src/Maths3D.c",
+      "-I/opt/homebrew/include",
+      "-I",
+      "src",
+      "src/app/App.c",
       "-o",
       "renderer"
     ],
@@ -30,14 +36,17 @@
     "output": "renderer"
   },
   {
-    "file": "src/Mesh.c",
+    "file": "src/app/Input.c",
     "arguments": [
       "clang",
       "-Wall",
       "-Wextra",
       "-std=c11",
       "-I/opt/homebrew/Cellar/glfw/3.4/include",
-      "src/Mesh.c",
+      "-I/opt/homebrew/include",
+      "-I",
+      "src",
+      "src/app/Input.c",
       "-o",
       "renderer"
     ],
@@ -45,14 +54,125 @@
     "output": "renderer"
   },
   {
-    "file": "src/Shader.c",
+    "file": "src/assets/Mesh.c",
     "arguments": [
       "clang",
       "-Wall",
       "-Wextra",
       "-std=c11",
       "-I/opt/homebrew/Cellar/glfw/3.4/include",
-      "src/Shader.c",
+      "-I/opt/homebrew/include",
+      "-I",
+      "src",
+      "src/assets/Mesh.c",
+      "-o",
+      "renderer"
+    ],
+    "directory": "/Users/dominicreynolds/Development/renderer-c",
+    "output": "renderer"
+  },
+  {
+    "file": "src/maths/Maths3D.c",
+    "arguments": [
+      "clang",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I/opt/homebrew/Cellar/glfw/3.4/include",
+      "-I/opt/homebrew/include",
+      "-I",
+      "src",
+      "src/maths/Maths3D.c",
+      "-o",
+      "renderer"
+    ],
+    "directory": "/Users/dominicreynolds/Development/renderer-c",
+    "output": "renderer"
+  },
+  {
+    "file": "src/rendering/Renderer.c",
+    "arguments": [
+      "clang",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I/opt/homebrew/Cellar/glfw/3.4/include",
+      "-I/opt/homebrew/include",
+      "-I",
+      "src",
+      "src/rendering/Renderer.c",
+      "-o",
+      "renderer"
+    ],
+    "directory": "/Users/dominicreynolds/Development/renderer-c",
+    "output": "renderer"
+  },
+  {
+    "file": "src/rendering/Shader.c",
+    "arguments": [
+      "clang",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I/opt/homebrew/Cellar/glfw/3.4/include",
+      "-I/opt/homebrew/include",
+      "-I",
+      "src",
+      "src/rendering/Shader.c",
+      "-o",
+      "renderer"
+    ],
+    "directory": "/Users/dominicreynolds/Development/renderer-c",
+    "output": "renderer"
+  },
+  {
+    "file": "src/scene/Registry.c",
+    "arguments": [
+      "clang",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I/opt/homebrew/Cellar/glfw/3.4/include",
+      "-I/opt/homebrew/include",
+      "-I",
+      "src",
+      "src/scene/Registry.c",
+      "-o",
+      "renderer"
+    ],
+    "directory": "/Users/dominicreynolds/Development/renderer-c",
+    "output": "renderer"
+  },
+  {
+    "file": "src/scene/camera.c",
+    "arguments": [
+      "clang",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I/opt/homebrew/Cellar/glfw/3.4/include",
+      "-I/opt/homebrew/include",
+      "-I",
+      "src",
+      "src/scene/camera.c",
+      "-o",
+      "renderer"
+    ],
+    "directory": "/Users/dominicreynolds/Development/renderer-c",
+    "output": "renderer"
+  },
+  {
+    "file": "src/scene/scene.c",
+    "arguments": [
+      "clang",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I/opt/homebrew/Cellar/glfw/3.4/include",
+      "-I/opt/homebrew/include",
+      "-I",
+      "src",
+      "src/scene/scene.c",
       "-o",
       "renderer"
     ],

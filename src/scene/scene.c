@@ -162,7 +162,6 @@ void scene_render(Scene *scene, App *app) {
   Mat4 proj = mat4_perspective(1.0f, (float)app->width / app->height, 0.1f, 100.0f);
 
   shader_use(app->shader);
-  //shader_set_float(app->shader, "u_light_dir", 0.0f);
 
   glUniform3f(glGetUniformLocation(app->shader, "u_light_dir"), 0.3f, 1.0f, 0.7f);
 

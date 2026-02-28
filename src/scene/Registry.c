@@ -20,8 +20,8 @@ int mesh_reg_add(MeshRegistry *mesh_registry, RenderMesh item) {
 }
 
 RenderMesh* mesh_reg_get(MeshRegistry *mesh_registry, int id) {
-  if (id >= mesh_registry->count) {
-    return 0;
+  if (id >= mesh_registry->count || id < 0) {
+    return NULL;
   }
   return &mesh_registry->items[id];
 }
@@ -42,7 +42,7 @@ int mat_reg_add(MaterialRegistry *material_registry, Material item) {
 }
 
 Material* mat_reg_get(MaterialRegistry *material_registry, int id) {
-  if (id >= material_registry->count) {
+  if (id >= material_registry->count || id < 0) {
     return &DEFAULT_MATERIAL;
   }
   return &material_registry->items[id];
