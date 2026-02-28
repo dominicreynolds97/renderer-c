@@ -38,6 +38,12 @@ typedef struct {
 } MaterialComponent;
 
 typedef struct {
+  Entity  entity;
+  Vec3f   velocity;
+  UT_hash_handle hh;
+} VelocityComponent;
+
+typedef struct {
   int next_id;
 
   PositionComponent   *positions;
@@ -45,6 +51,7 @@ typedef struct {
   ScaleComponent      *scales;
   MeshComponent       *meshes;
   MaterialComponent   *materials;
+  VelocityComponent   *velocities;
 
   MeshRegistry        mesh_registry;
   MaterialRegistry    material_registry;
@@ -58,12 +65,15 @@ void world_add_rotation(World *world, Entity e, Vec3f rotation);
 void world_add_scale(World *world, Entity e, Vec3f scale);
 void world_add_material(World *world, Entity e, int mesh_id);
 void world_add_mesh(World *world, Entity e, int mesh_id);
+void world_add_velocity(World *world, Entity e, Vec3f velocity);
 
 PositionComponent* world_get_position(World *world, Entity e);
 RotationComponent* world_get_rotation(World *world, Entity e);
 ScaleComponent* world_get_scale(World *world, Entity e);
 MaterialComponent* world_get_material(World *world, Entity e);
 MeshComponent* world_get_mesh(World *world, Entity e);
+VelocityComponent* world_get_velocity(World *world, Entity e);
+
 Mat4 world_get_transform(World *world, Entity e);
 
 void world_destroy_entity(World *world, Entity e);

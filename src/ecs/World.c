@@ -8,6 +8,7 @@ void world_init(World *world) {
   world->scales     = NULL;
   world->meshes     = NULL;
   world->materials  = NULL;
+  world->velocities = NULL;
 
   mesh_reg_init(&world->mesh_registry);
   mat_reg_init(&world->material_registry);
@@ -53,6 +54,13 @@ void world_add_mesh(World *world, Entity e, int mesh_id) {
   HASH_ADD_INT(world->meshes, entity, c);
 }
 
+void world_add_velocity(World *world, Entity e, Vec3f velocity) {
+  VelocityComponent *c = malloc(sizeof(VelocityComponent));
+  c->entity = e;
+  c->velocity = velocity;
+  HASH_ADD_INT(world->velocities, entity, c);
+}
+
 
 PositionComponent* world_get_position(World *world, Entity e) {
   PositionComponent *c;
@@ -81,6 +89,12 @@ MaterialComponent* world_get_material(World *world, Entity e) {
 MeshComponent* world_get_mesh(World *world, Entity e) {
   MeshComponent *c;
   HASH_FIND_INT(world->meshes, &e, c);
+  return c;
+}
+
+VelocityComponent* world_get_velocity(World *world, Entity e) {
+  VelocityComponent *c;
+  HASH_FIND_INT(world->velocities, &e, c);
   return c;
 }
 
@@ -130,6 +144,11 @@ static void destroy_material(World *world, MaterialComponent *c) {
   free(c);
 }
 
+static void destroy_velocity(World *world, VelocityComponent *c) {
+  HASH_DEL(world->velocities, c);
+  free(c);
+}
+
 
 void world_destroy_entity(World *world, Entity e) {
   PositionComponent *p = world_get_position(world, e);
@@ -146,6 +165,9 @@ void world_destroy_entity(World *world, Entity e) {
 
   MaterialComponent *mat = world_get_material(world, e);
   if (mat) destroy_material(world, mat);
+
+  VelocityComponent *v = world_get_velocity(world, e);
+  if (v) destroy_velocity(world, v);
 }
 
 void world_destroy(World *world) {
@@ -163,6 +185,9 @@ void world_destroy(World *world) {
 
   MaterialComponent *mat, *tmp5;
   HASH_ITER(hh, world->materials, mat, tmp5) { destroy_material(world, mat); }
+
+  VelocityComponent *v, *tmp6;
+  HASH_ITER(hh, world->velocities, v, tmp6) { destroy_velocity(world, v); }
 
   world->next_id = 0;
 

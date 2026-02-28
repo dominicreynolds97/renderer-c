@@ -3,6 +3,7 @@
 
 #include "rendering/Shader.h"
 #include "scene/Scene.h"
+#include "ecs/System.h"
 #include "Input.h"
 
 const char* APP_NAME = "Renderer";
@@ -82,6 +83,8 @@ void app_run(App *app) {
     last_frame_time = now;
 
     handle_input(app, &scene, delta_time);
+
+    update_systems(&scene.world, delta_time);
 
     scene_render(&scene, app);
   }

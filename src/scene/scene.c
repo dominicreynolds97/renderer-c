@@ -56,9 +56,7 @@ int parse_scene_file(Scene *scene, char* filepath) {
 
   Material current_material = {0};
 
-  Vec3f position = vec3f_identity();
-  Vec3f rotation = vec3f_identity();
-  Vec3f scale = {1.0f, 1.0f, 1.0f};
+  Entity current_entity;
 
   while (fgets(line, sizeof(line), file)) {
     trimString(line);
@@ -94,6 +92,7 @@ int parse_scene_file(Scene *scene, char* filepath) {
           state = IN_OBJECT;
 
           sscanf(line, "object %s %s", current_mesh_name, current_mat_name);
+          current_entity = world_create_entity(&scene->world);
         }
         if (strncmp(line, "skybox", 6) == 0) {
           state = IN_SKYBOX;
@@ -119,37 +118,34 @@ int parse_scene_file(Scene *scene, char* filepath) {
         break;
       case(IN_OBJECT):
         if (strncmp(line, "position", 8) == 0) {
-          Vec3f t;
-          sscanf(line, "position %f %f %f", &t.x, &t.y, &t.z);
+          Vec3f position;
+          sscanf(line, "position %f %f %f", &position.x, &position.y, &position.z);
 
-          position = vec3f_add(position, t);
+          world_add_position(&scene->world, current_entity, position);
         }
         if (strncmp(line, "rotation", 8) == 0) {
-          Vec3f r;
-          sscanf(line, "rotation %f %f %f", &r.x, &r.y, &r.z);
-          rotation = vec3f_add(rotation, r);
+          Vec3f rotation;
+          sscanf(line, "rotation %f %f %f", &rotation.x, &rotation.y, &rotation.z);
+
+          world_add_rotation(&scene->world, current_entity, rotation);
         }
         if (strncmp(line, "scale", 5) == 0) {
-          Vec3f s;
-          sscanf(line, "scale %f %f %f", &s.x, &s.y, &s.z);
-          scale = vec3f_product(scale, s);
+          Vec3f scale;
+          sscanf(line, "scale %f %f %f", &scale.x, &scale.y, &scale.z);
+
+          world_add_scale(&scene->world, current_entity, scale);
+        }
+        if (strncmp(line, "velocity", 8) == 0) {
+          Vec3f v;
+          sscanf(line, "velocity %f %f %f", &v.x, &v.y, &v.z);
+          world_add_velocity(&scene->world, current_entity, v);
         }
         if (strncmp(line, "end", 3) == 0) {
           int mesh_id = find_id(mesh_names, scene->world.mesh_registry.count, current_mesh_name);
           int mat_id = find_id(material_names, scene->world.material_registry.count, current_mat_name);
 
-          Entity e = world_create_entity(&scene->world);
-
-          world_add_position(&scene->world, e, position);
-          world_add_rotation(&scene->world, e, rotation);
-          world_add_scale(&scene->world, e, scale);
-
-          if (mesh_id >= 0) world_add_mesh(&scene->world, e, mesh_id);
-          if (mat_id >= 0) world_add_material(&scene->world, e, mat_id);
-
-          position = vec3f_identity();
-          rotation = vec3f_identity();
-          scale = (Vec3f){1.0f, 1.0f, 1.0f};
+          if (mesh_id >= 0) world_add_mesh(&scene->world, current_entity, mesh_id);
+          if (mat_id >= 0) world_add_material(&scene->world, current_entity, mat_id);
 
           state = IDLE;
         }
