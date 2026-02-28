@@ -4,6 +4,8 @@
 #include "../rendering/Shader.h"
 #include "Registry.h"
 #include "camera.h"
+#include "ecs/World.h"
+#include "maths/Maths3D.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,8 +35,7 @@ int find_id(char names[][64], int count, char *name) {
 
 int parse_scene_file(Scene *scene, char* filepath) {
   scene->camera = init_camera();
-  mesh_reg_init(&scene->mesh_registry);
-  mat_reg_init(&scene->material_registry);
+  world_init(&scene->world);
 
   FILE *file = fopen(filepath, "r");
   if (!file) {
@@ -67,12 +68,12 @@ int parse_scene_file(Scene *scene, char* filepath) {
           char name[64], path[256];
           sscanf(line, "mesh %s %s", name, path);
 
-          strncpy(mesh_names[scene->mesh_registry.count], name, 63);
-          mesh_names[scene->mesh_registry.count][63] = '\0';
+          strncpy(mesh_names[scene->world.mesh_registry.count], name, 63);
+          mesh_names[scene->world.mesh_registry.count][63] = '\0';
 
           Mesh mesh = load_obj(path);
           RenderMesh rm = renderer_upload_mesh(&mesh);
-          mesh_reg_add(&scene->mesh_registry, rm);
+          mesh_reg_add(&scene->world.mesh_registry, rm);
 
           free_mesh(&mesh);
         }
@@ -82,8 +83,8 @@ int parse_scene_file(Scene *scene, char* filepath) {
           char name[64];
           sscanf(line, "material %s", name);
 
-          strncpy(material_names[scene->material_registry.count], name, 63);
-          material_names[scene->material_registry.count][63] = '\0';
+          strncpy(material_names[scene->world.material_registry.count], name, 63);
+          material_names[scene->world.material_registry.count][63] = '\0';
         }
         if (strncmp(line, "object", 6) == 0) {
           state = IN_OBJECT;
@@ -98,7 +99,7 @@ int parse_scene_file(Scene *scene, char* filepath) {
           current_material.color = color;
         }
         if (strncmp(line, "end", 3) == 0) {
-          mat_reg_add(&scene->material_registry, current_material);
+          mat_reg_add(&scene->world.material_registry, current_material);
           current_material = (Material){0};
 
           state = IDLE;
@@ -122,10 +123,9 @@ int parse_scene_file(Scene *scene, char* filepath) {
           scale = vec3f_add(scale, s);
         }
         if (strncmp(line, "end", 3) == 0) {
-          SceneObject obj = {0};
-          obj.mesh_id = find_id(mesh_names, scene->mesh_registry.count, current_mesh_name);
-          obj.mat_id = find_id(material_names, scene->material_registry.count, current_mat_name);
-          obj.transform = mat4_mul(
+          int mesh_id = find_id(mesh_names, scene->world.mesh_registry.count, current_mesh_name);
+          int mat_id = find_id(material_names, scene->world.material_registry.count, current_mat_name);
+          Mat4 transform = mat4_mul(
             mat4_translation(translate.x, translate.y, translate.z),
             mat4_mul(
               mat4_rotation(rotation),
@@ -133,11 +133,14 @@ int parse_scene_file(Scene *scene, char* filepath) {
             )
           );
 
+          Entity e = world_create_entity(&scene->world);
+          world_add_transform(&scene->world, e, transform);
+          if (mesh_id >= 0) world_add_mesh(&scene->world, e, mesh_id);
+          if (mat_id >= 0) world_add_material(&scene->world, e, mat_id);
+
           translate = vec3f_identity();
           rotation = vec3f_identity();
           scale = (Vec3f){1.0f, 1.0f, 1.0f};
-          scene->objects[scene->object_count] = obj;
-          scene->object_count++;
 
           state = IDLE;
         }
@@ -150,8 +153,6 @@ int parse_scene_file(Scene *scene, char* filepath) {
 
 void scene_create(Scene *scene) {
   parse_scene_file(scene, "scenes/scene1.scene");
-  printf("objs: %d\n", scene->object_count);
-  printf("mats: %d\n", scene->mesh_registry.count);
 }
 
 void scene_render(Scene *scene, App *app) {
@@ -165,18 +166,29 @@ void scene_render(Scene *scene, App *app) {
 
   glUniform3f(glGetUniformLocation(app->shader, "u_light_dir"), 0.3f, 1.0f, 0.7f);
 
-  for (int i = 0; i < scene->object_count; i++) {
-    SceneObject obj = scene->objects[i];
-    RenderMesh* mesh = mesh_reg_get(&scene->mesh_registry, obj.mesh_id);
-    Material* mat = mat_reg_get(&scene->material_registry, obj.mat_id);
+  MeshComponent *mesh_c, *tmp;
+  HASH_ITER(hh, scene->world.meshes, mesh_c, tmp) {
+    Entity e = mesh_c->entity;
+
+    MeshComponent *mesh_c = world_get_mesh(&scene->world, e);
+    if (!mesh_c) continue;
+
+    MaterialComponent *mat_c = world_get_material(&scene->world, e);
+    int mat_id = mat_c != NULL ? mat_c->mat_id : -1;
+
+    RenderMesh* mesh = mesh_reg_get(&scene->world.mesh_registry, mesh_c->mesh_id);
+    Material* mat = mat_reg_get(&scene->world.material_registry, mat_id);
 
     glUniform3f(glGetUniformLocation(app->shader, "u_color"), mat->color.x, mat->color.y, mat->color.z);
 
     if (!mesh) continue;
 
-    Mat4 mvp = mat4_mul(proj, mat4_mul(view, obj.transform));
+    TransformComponent *tc = world_get_transform(&scene->world, e);
+    Mat4 transform = tc != NULL ? tc->transform : mat4_identity();
+
+    Mat4 mvp = mat4_mul(proj, mat4_mul(view, transform));
     shader_set_mat4(app->shader, "u_mvp", &mvp.m[0][0]);
-    shader_set_mat4(app->shader, "u_model", &obj.transform.m[0][0]);
+    shader_set_mat4(app->shader, "u_model", &transform.m[0][0]);
 
     renderer_draw(mesh, app->shader);
   }
@@ -185,6 +197,5 @@ void scene_render(Scene *scene, App *app) {
 }
 
 void scene_destroy(Scene *scene) {
-  mesh_reg_destroy(&scene->mesh_registry);
-  mat_reg_destroy(&scene->material_registry);
+  world_destroy(&scene->world);
 }

@@ -2,22 +2,11 @@
 #define SCENE_H
 
 #include "app/App.h"
-#include "Registry.h"
 #include "camera.h"
-
-#define MAX_OBJECTS 64
-
-typedef struct {
-  int mesh_id;
-  int mat_id;
-  Mat4 transform;
-} SceneObject;
+#include "ecs/World.h"
 
 typedef struct {
-  int object_count;
-  MeshRegistry mesh_registry;
-  MaterialRegistry material_registry;
-  SceneObject objects[MAX_OBJECTS];
+  World world;
   Camera camera;
 } Scene;
 
