@@ -14,6 +14,7 @@
 #define IDLE 0
 #define IN_MATERIAL 1
 #define IN_OBJECT 2
+#define IN_SKYBOX 3
 
 void trimString(char *str) {
   int start = 0, end = strlen(str) -1;
@@ -91,6 +92,9 @@ int parse_scene_file(Scene *scene, char* filepath) {
 
           sscanf(line, "object %s %s", current_mesh_name, current_mat_name);
         }
+        if (strncmp(line, "skybox", 6) == 0) {
+          state = IN_SKYBOX;
+        }
         break;
       case(IN_MATERIAL):
         if (strncmp(line, "color", 5) == 0) {
@@ -145,6 +149,16 @@ int parse_scene_file(Scene *scene, char* filepath) {
           state = IDLE;
         }
         break;
+      case(IN_SKYBOX):
+        if (strncmp(line, "color", 5) == 0) {
+          Vec3f color;
+          sscanf(line, "color %f %f %f", &color.x, &color.y, &color.z);
+          scene->skybox.color = color;
+        }
+        if (strncmp(line, "end", 3) == 0) {
+          state = IDLE;
+        }
+        break;
     }
   }
 
@@ -156,7 +170,7 @@ void scene_create(Scene *scene) {
 }
 
 void scene_render(Scene *scene, App *app) {
-  glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+  glClearColor(scene->skybox.color.x, scene->skybox.color.y, scene->skybox.color.z, 1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   Mat4 view = get_camera_view(&scene->camera);
@@ -169,9 +183,6 @@ void scene_render(Scene *scene, App *app) {
   MeshComponent *mesh_c, *tmp;
   HASH_ITER(hh, scene->world.meshes, mesh_c, tmp) {
     Entity e = mesh_c->entity;
-
-    MeshComponent *mesh_c = world_get_mesh(&scene->world, e);
-    if (!mesh_c) continue;
 
     MaterialComponent *mat_c = world_get_material(&scene->world, e);
     int mat_id = mat_c != NULL ? mat_c->mat_id : -1;

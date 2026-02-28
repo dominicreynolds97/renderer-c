@@ -6,7 +6,12 @@
 #include "ecs/World.h"
 
 typedef struct {
+  Vec3f color;
+} Skybox;
+
+typedef struct {
   World world;
+  Skybox skybox;
   Camera camera;
 } Scene;
 

@@ -12,7 +12,7 @@ void main() {
   vec3 n = normalize(v_normal);
   vec3 l = normalize(u_light_dir);
   float diffuse = max(dot(n, l), 0.0);
-  float ambient = 0.2;
+  float ambient = 0.3;
   float intensity = ambient + (1.0 - ambient) * diffuse;
 
   frag_color = vec4(u_color * intensity, 1.0);

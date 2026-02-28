@@ -1,7 +1,13 @@
 // SCENE 1
 
+mesh plane meshes/plane.obj
 mesh cube meshes/cube.obj
 mesh cylinder meshes/cylinder.obj
+
+// Skybox
+skybox
+  color 0.53 0.81 0.98
+end
 
 // Materials
 material red
@@ -12,7 +18,16 @@ material teal
   color 0.4 0.8 0.8
 end
 
+material green
+  color 0.4 0.8 0.4
+end
+
 // Objects
+object plane green
+  scale 30.0 1.0 30.0
+  translate 0.0 -1.0 0.0
+end
+
 object cube red
   translate -2.0 -1.0 0.0
   rotate 0.0 0.5 0.0

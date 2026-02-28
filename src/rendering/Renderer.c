@@ -3,33 +3,24 @@
 #include <stdlib.h>
 
 float* get_vertex_data(Mesh *mesh) {
-  float *vertex_data = malloc(mesh->vertex_count * 6 * sizeof(float));
+  float *vertex_data = malloc(mesh->vertex_count * 8 * sizeof(float));
   for (int i = 0; i < mesh->vertex_count; i++) {
-    vertex_data[i * 6 + 0] = mesh->vertices[i].x;
-    vertex_data[i * 6 + 1] = mesh->vertices[i].y;
-    vertex_data[i * 6 + 2] = mesh->vertices[i].z;
-    vertex_data[i * 6 + 3] = mesh->normals[i].x;
-    vertex_data[i * 6 + 4] = mesh->normals[i].y;
-    vertex_data[i * 6 + 5] = mesh->normals[i].z;
+    vertex_data[i * 8 + 0] = mesh->positions[i].x;
+    vertex_data[i * 8 + 1] = mesh->positions[i].y;
+    vertex_data[i * 8 + 2] = mesh->positions[i].z;
+    vertex_data[i * 8 + 3] = mesh->normals[i].x;
+    vertex_data[i * 8 + 4] = mesh->normals[i].y;
+    vertex_data[i * 8 + 5] = mesh->normals[i].z;
+    vertex_data[i * 8 + 6] = mesh->uvs[i].x;
+    vertex_data[i * 8 + 7] = mesh->uvs[i].y;
   }
   return vertex_data;
-}
-
-int* get_indices(Mesh *mesh) {
-  int *indices = malloc(mesh->face_count * 3 * sizeof(int));
-  for (int i = 0; i< mesh->face_count; i++) {
-    indices[i * 3 + 0] = (unsigned int)mesh->faces[i][0];
-    indices[i * 3 + 1] = (unsigned int)mesh->faces[i][1];
-    indices[i * 3 + 2] = (unsigned int)mesh->faces[i][2];
-  }
-  return indices;
 }
 
 RenderMesh renderer_upload_mesh(Mesh *mesh) {
   RenderMesh rm = {0};
 
   float* vertex_data = get_vertex_data(mesh);
-  int* indices = get_indices(mesh);
 
   glGenVertexArrays(1, &rm.vao);
   glGenBuffers(1, &rm.vbo);
@@ -38,26 +29,27 @@ RenderMesh renderer_upload_mesh(Mesh *mesh) {
   glBindVertexArray(rm.vao);
 
   glBindBuffer(GL_ARRAY_BUFFER, rm.vbo);
-  glBufferData(GL_ARRAY_BUFFER, mesh->vertex_count * 6 * sizeof(float),
+  glBufferData(GL_ARRAY_BUFFER, mesh->vertex_count * 8 * sizeof(float),
       vertex_data, GL_STATIC_DRAW);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rm.ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->face_count * 3 * sizeof(unsigned int),
-      indices, GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->index_count * sizeof(int),
+      mesh->indices, GL_STATIC_DRAW);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
 
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-      (void *)(3 * sizeof(float)));
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
+
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+  glEnableVertexAttribArray(2);
 
   glBindVertexArray(0);
 
-  rm.index_count = mesh->face_count * 3;
+  rm.index_count = mesh->index_count;
 
   free(vertex_data);
-  free(indices);
 
   return rm;
 }

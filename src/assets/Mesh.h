@@ -4,11 +4,12 @@
 #include "maths/Maths3D.h"
 
 typedef struct {
-  Vec3f *vertices;
+  Vec3f *positions;
   Vec3f *normals;
-  int vertex_count;
-  int (*faces)[3];
-  int face_count;
+  Vec2f *uvs;
+  int   *indices;
+  int   vertex_count;
+  int   index_count;
 } Mesh;
 
 Mesh load_obj(const char *path);
