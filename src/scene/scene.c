@@ -20,6 +20,7 @@
 #define IN_OBJECT 2
 #define IN_SKYBOX 3
 #define IN_PATH 4
+#define IN_COLLIDER 5
 
 void trimString(char *str) {
   int start = 0, end = strlen(str) -1;
@@ -40,7 +41,6 @@ int find_id(char names[][64], int count, char *name) {
 }
 
 int parse_scene_file(Scene *scene, char* filepath) {
-  scene->camera = init_camera();
   world_init(&scene->world);
 
   FILE *file = fopen(filepath, "r");
@@ -64,6 +64,9 @@ int parse_scene_file(Scene *scene, char* filepath) {
   current_path.is_loop = 0;
   current_path.current_waypoint = 0;
   current_path.initialized = 0;
+
+  Vec3f current_half_extents  = vec3f_identity();
+  int   current_is_static     = 1;
 
   Entity current_entity;
 
@@ -168,6 +171,10 @@ int parse_scene_file(Scene *scene, char* filepath) {
             current_path.is_loop = 0;
           }
         }
+        if (strncmp(line, "collider", 8) == 0) {
+          state = IN_COLLIDER;
+          current_is_static = strncmp(line, "collider dynamic", 16) == 0 ? 0 : 1;
+        }
         if (strncmp(line, "end", 3) == 0) {
           int mesh_id = find_id(mesh_names, scene->world.mesh_registry.count, current_mesh_name);
           int mat_id = find_id(material_names, scene->world.material_registry.count, current_mat_name);
@@ -201,6 +208,21 @@ int parse_scene_file(Scene *scene, char* filepath) {
 
           state = IN_OBJECT;
         }
+        break;
+      case(IN_COLLIDER):
+        if (strncmp(line, "extents", 7) == 0) {
+          Vec3f half_extents;
+          sscanf(line, "extents %f %f %f", &half_extents.x, &half_extents.y, &half_extents.z);
+          current_half_extents = half_extents;
+        }
+        if (strncmp(line, "end", 3) == 0) {
+          world_add_collider(&scene->world, current_entity, current_half_extents, current_is_static);
+          current_half_extents = vec3f_identity();
+          current_is_static = 1;
+
+          state = IN_OBJECT;
+        }
+        break;
     }
   }
 
@@ -215,7 +237,7 @@ void scene_render(Scene *scene, App *app) {
   glClearColor(scene->skybox.color.x, scene->skybox.color.y, scene->skybox.color.z, 1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  Mat4 view = get_camera_view(&scene->camera);
+  Mat4 view = get_camera_view(&scene->world.camera);
   Mat4 proj = mat4_perspective(1.0f, (float)app->width / app->height, 0.1f, 100.0f);
 
   shader_use(app->shader);

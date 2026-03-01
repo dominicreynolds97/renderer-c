@@ -1,4 +1,5 @@
 #include "camera.h"
+#include "maths/Maths3D.h"
 #include <math.h>
 
 const Vec3f UP = {0.0f, 1.0f, 0.0f};
@@ -33,30 +34,6 @@ Vec3f get_forward(Camera *camera) {
 Vec3f get_right(Camera *camera) {
   return vec3f_cross(get_h_forward(camera), UP);
 }
-
-void move_forward(Camera *camera, float dt, float speed) {
-  float distance = speed * dt;
-  camera->pos = vec3f_add(
-    camera->pos,
-    vec3f_scale(get_h_forward(camera), distance)
-  );
-}
-
-void move_back(Camera *camera, float dt, float speed) {
-  move_forward(camera, -dt, speed);
-}
-
-void move_right(Camera *camera, float dt, float speed) {
-  float distance = speed * dt;
-  camera->pos = vec3f_add(
-    camera->pos,
-    vec3f_scale(get_right(camera), distance)
-  );
-}
- void move_left(Camera *camera, float dt, float speed) {
-   move_right(camera, -dt, speed);
- }
-
 
 Mat4 get_camera_view(Camera *camera) {
   Vec3f target = vec3f_add(camera->pos, get_forward(camera));

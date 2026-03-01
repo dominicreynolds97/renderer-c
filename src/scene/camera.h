@@ -18,10 +18,6 @@ Camera init_camera();
 Vec3f get_h_forward(Camera *camera);
 Vec3f get_forward(Camera *camera);
 Vec3f get_right(Camera *camera);
-void move_forward(Camera *camera, float dt, float speed);
-void move_back(Camera *camera, float dt, float speed);
-void move_right(Camera *camera, float dt, float speed);
-void move_left(Camera *camera, float dt, float speed);
 Mat4 get_camera_view(Camera *camera);
 
 #endif

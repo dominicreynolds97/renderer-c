@@ -10,7 +10,7 @@
 const char* APP_NAME = "Renderer";
 
 void setup_cursor_callback(App *app, Scene *scene) {
-  glfwSetWindowUserPointer(app->window, &scene->camera);
+  glfwSetWindowUserPointer(app->window, &scene->world.camera);
   glfwSetCursorPosCallback(app->window, mouse_callback);
 }
 

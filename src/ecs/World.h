@@ -3,6 +3,7 @@
 
 #include "maths/Maths3D.h"
 #include "scene/Registry.h"
+#include "scene/camera.h"
 #include "vendor/uthash.h"
 
 #define MAX_WAYPOINTS 16
@@ -67,6 +68,18 @@ typedef struct {
 } SpeedComponent;
 
 typedef struct {
+  Entity  entity;
+  float   height;
+} PlayerComponent;
+
+typedef struct {
+  Entity  entity;
+  Vec3f   half_extents;
+  int     is_static;
+  UT_hash_handle hh;
+} ColliderComponent;
+
+typedef struct {
   int next_id;
 
   PositionComponent   *positions;
@@ -77,9 +90,13 @@ typedef struct {
   VelocityComponent   *velocities;
   PathComponent       *paths;
   SpeedComponent      *speeds;
+  PlayerComponent     player;
+  ColliderComponent   *colliders;
 
   MeshRegistry        mesh_registry;
   MaterialRegistry    material_registry;
+
+  Camera              camera;
 } World;
 
 void world_init(World *world);
@@ -93,6 +110,7 @@ void world_add_mesh(World *world, Entity e, int mesh_id);
 void world_add_velocity(World *world, Entity e, Vec3f velocity);
 void world_add_path(World *world, Entity e, Path path);
 void world_add_speed(World *world, Entity e, float speed);
+void world_add_collider(World *world, Entity e, Vec3f half_extents, int is_static);
 
 PositionComponent* world_get_position(World *world, Entity e);
 RotationComponent* world_get_rotation(World *world, Entity e);
@@ -102,6 +120,7 @@ MeshComponent* world_get_mesh(World *world, Entity e);
 VelocityComponent* world_get_velocity(World *world, Entity e);
 PathComponent* world_get_path(World *world, Entity e);
 SpeedComponent* world_get_speed(World *world, Entity e);
+ColliderComponent* world_get_collider(World *world, Entity e);
 
 void world_destroy_path(World *world, PathComponent *pc);
 

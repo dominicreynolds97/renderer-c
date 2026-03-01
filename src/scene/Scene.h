@@ -3,7 +3,6 @@
 
 #include "app/App.h"
 #include "assets/Grid.h"
-#include "camera.h"
 #include "ecs/World.h"
 
 typedef struct {
@@ -13,7 +12,6 @@ typedef struct {
 typedef struct {
   World   world;
   Skybox  skybox;
-  Camera  camera;
   Grid    grid;
 } Scene;
 

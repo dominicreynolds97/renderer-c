@@ -2,6 +2,7 @@
 #include "ecs/World.h"
 #include "maths/Maths3D.h"
 #include "vendor/uthash.h"
+#include <math.h>
 
 static void apply_paths(World *world) {
   PathComponent *p, *tmp1;
@@ -77,7 +78,53 @@ static void apply_velocities(World *world, float dt) {
   }
 }
 
+static void update_player(World *world) {
+  PositionComponent *player_pos = world_get_position(world, world->player.entity);
+  if (player_pos) world->camera.pos = player_pos->position;
+}
+
+static int aabb_overlap(Vec3f pos_a, Vec3f half_a, Vec3f pos_b, Vec3f half_b) {
+  return fabsf(pos_a.x - pos_b.x) < half_a.x + half_b.x &&
+         fabsf(pos_a.y - pos_b.y) < half_a.y + half_b.y &&
+         fabsf(pos_a.z - pos_b.z) < half_a.z + half_b.z;
+}
+
+static void resolve_collisions(World *world) {
+  ColliderComponent *a, *tmp1;
+  HASH_ITER(hh, world->colliders, a, tmp1) {
+    if (a->is_static) continue;
+
+    PositionComponent *ap = world_get_position(world, a->entity);
+    if (!ap) continue;
+
+    ColliderComponent *b, *tmp2;
+    HASH_ITER(hh, world->colliders, b, tmp2) {
+      if (a->entity == b->entity) continue;
+
+      PositionComponent *bp = world_get_position(world, b->entity);
+      if (!bp) continue;
+
+      if (!aabb_overlap(ap->position, a->half_extents, bp->position, b->half_extents))
+        continue;
+
+      float dx = (a->half_extents.x + b->half_extents.x) - fabsf(ap->position.x - bp->position.x);
+      float dy = (a->half_extents.y + b->half_extents.y) - fabsf(ap->position.y - bp->position.y);
+      float dz = (a->half_extents.z + b->half_extents.z) - fabsf(ap->position.z - bp->position.z);
+
+      if (dx < dy && dx < dz) {
+        ap->position.x += ap->position.x < bp->position.x ? -dx : dx;
+      } else if (dy < dx && dy < dz) {
+        ap->position.y += ap->position.y < bp->position.y ? -dy : dy;
+      } else {
+        ap->position.z += ap->position.z < bp->position.z ? -dz : dz;
+      }
+    }
+  }
+}
+
 void update_systems(World *world, float dt) {
+  update_player(world);
   apply_paths(world);
   apply_velocities(world, dt);
+  resolve_collisions(world);
 }

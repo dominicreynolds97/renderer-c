@@ -1,5 +1,20 @@
 #include "World.h"
 #include "maths/Maths3D.h"
+#include "scene/camera.h"
+
+static void init_player(World *world) {
+  Entity e = world_create_entity(world);
+
+  world->player = (PlayerComponent){
+    .entity = e,
+    .height = 1.8
+  };
+  world_add_position(world, e, (Vec3f){0.0f, 1.8f, 0.0f});
+  world_add_velocity(world, e, vec3f_identity());
+  world_add_collider(world, e, (Vec3f){0.3f, 1.6f, 0.3f}, 0);
+  //world_add_rotation(world, e, vec3f_identity());
+  world_add_speed(world, e, 5.0f);
+}
 
 void world_init(World *world) {
   world->next_id    = 0;
@@ -11,9 +26,14 @@ void world_init(World *world) {
   world->velocities = NULL;
   world->paths      = NULL;
   world->speeds     = NULL;
+  world->colliders  = NULL;
+
+  init_player(world);
 
   mesh_reg_init(&world->mesh_registry);
   mat_reg_init(&world->material_registry);
+
+  world->camera = init_camera();
 }
 
 Entity world_create_entity(World *world) {
@@ -77,6 +97,14 @@ void world_add_speed(World *world, Entity e, float speed) {
   HASH_ADD_INT(world->speeds, entity, c);
 }
 
+void world_add_collider(World *world, Entity e, Vec3f half_extents, int is_static) {
+  ColliderComponent *c = malloc(sizeof(ColliderComponent));
+  c->entity = e;
+  c->half_extents = half_extents;
+  c->is_static = is_static;
+  HASH_ADD_INT(world->colliders, entity, c);
+}
+
 
 PositionComponent* world_get_position(World *world, Entity e) {
   PositionComponent *c;
@@ -126,6 +154,11 @@ SpeedComponent* world_get_speed(World *world, Entity e) {
   return c;
 }
 
+ColliderComponent* world_get_collider(World *world, Entity e) {
+  ColliderComponent *c;
+  HASH_FIND_INT(world->colliders, &e, c);
+  return c;
+}
 
 Mat4 world_get_transform(World *world, Entity e) {
   PositionComponent *pc = world_get_position(world, e);
@@ -188,6 +221,11 @@ static void destroy_speed(World *world, SpeedComponent *c) {
   free(c);
 }
 
+static void destroy_collider(World *world, ColliderComponent *c) {
+  HASH_DEL(world->colliders, c);
+  free(c);
+}
+
 void world_destroy_path(World *world, PathComponent *pc) {
   destroy_path(world, pc);
 }
@@ -217,6 +255,9 @@ void world_destroy_entity(World *world, Entity e) {
 
   SpeedComponent *speed = world_get_speed(world, e);
   if (speed) destroy_speed(world, speed);
+
+  ColliderComponent *collider = world_get_collider(world, e);
+  if (collider) destroy_collider(world, collider);
 }
 
 void world_destroy(World *world) {
@@ -243,6 +284,9 @@ void world_destroy(World *world) {
 
   SpeedComponent *speed, *tmp8;
   HASH_ITER(hh, world->speeds, speed, tmp8) { destroy_speed(world, speed); }
+
+  ColliderComponent *collider, *tmp9;
+  HASH_ITER(hh, world->colliders, collider, tmp9) { destroy_collider(world, collider); }
 
   world->next_id = 0;
 

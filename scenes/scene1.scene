@@ -26,10 +26,16 @@ end
 object plane green
   scale 30.0 1.0 30.0
   position 0.0 0.0 0.0
+  collider
+    extents 15.0 0.1 15.0
+  end
 end
 
 object cube red
   position -2.0 1.0 0.0
+  collider
+    extents 1.0 1.0 1.0
+  end
   speed 1.0
   path loop
     waypoint 0.0 0.0 0.0
@@ -37,11 +43,13 @@ object cube red
     waypoint 5.0 0.0 5.0
     waypoint 0.0 0.0 5.0
   end
-  rotation 0.0 0.5 0.0
 end
 
 object cylinder teal
-  position 0.0 1.0 -2.0
+  position 2.0 1.0 -2.0
+  collider
+    extents 1.0 1.0 1.0
+  end
   speed 2.0
   path loop
     waypoint 0.0 0.0 0.0
