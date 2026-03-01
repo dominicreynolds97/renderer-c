@@ -4,6 +4,7 @@
 #include "rendering/Shader.h"
 #include "scene/Scene.h"
 #include "ecs/System.h"
+#include "assets/Grid.h"
 #include "Input.h"
 
 const char* APP_NAME = "Renderer";
@@ -63,6 +64,7 @@ int app_create(App *app, int width, int height) {
 
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+
   app->window = window;
   app->shader = shader;
 
@@ -72,6 +74,8 @@ int app_create(App *app, int width, int height) {
 void app_run(App *app) {
   Scene scene;
   scene_create(&scene);
+
+  init_grid(&scene.grid, 10, 1);
 
   setup_cursor_callback(app, &scene);
 

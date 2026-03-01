@@ -8,6 +8,7 @@
 typedef struct {
   GLFWwindow  *window;
   GLuint      shader;
+  GLuint      flat_shader;
   int         width;
   int         height;
 } App;

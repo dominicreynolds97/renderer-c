@@ -22,6 +22,8 @@ void handle_input(App *app, Scene *scene, float dt) {
     move_left(&scene->camera, dt, SPEED);
   if (glfwGetKey(app->window, GLFW_KEY_D) == GLFW_PRESS)
     move_right(&scene->camera, dt, SPEED);
+  if (glfwGetKey(app->window, GLFW_KEY_G) == GLFW_PRESS)
+    scene->grid.visible = scene->grid.visible ? 0 : 1;
 }
 
 void mouse_callback(GLFWwindow *window, double mx, double my) {

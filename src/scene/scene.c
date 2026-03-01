@@ -4,6 +4,7 @@
 #include "../rendering/Shader.h"
 #include "Registry.h"
 #include "app/App.h"
+#include "assets/Grid.h"
 #include "assets/Texture.h"
 #include "camera.h"
 #include "ecs/World.h"
@@ -213,6 +214,8 @@ void scene_render(Scene *scene, App *app) {
 
     renderer_draw(mesh, app->shader);
   }
+
+  grid_render(&scene->grid, app->flat_shader, &proj.m[0][0], &view.m[0][0]);
 
   glfwSwapBuffers(app->window);
 }

@@ -2,6 +2,7 @@
 #define SCENE_H
 
 #include "app/App.h"
+#include "assets/Grid.h"
 #include "camera.h"
 #include "ecs/World.h"
 
@@ -10,9 +11,10 @@ typedef struct {
 } Skybox;
 
 typedef struct {
-  World world;
-  Skybox skybox;
-  Camera camera;
+  World   world;
+  Skybox  skybox;
+  Camera  camera;
+  Grid    grid;
 } Scene;
 
 void scene_create(Scene *scene);
