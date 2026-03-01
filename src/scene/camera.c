@@ -5,7 +5,7 @@ const Vec3f UP = {0.0f, 1.0f, 0.0f};
 
 Camera init_camera() {
   return (Camera) {
-    (Vec3f) {0.0f, 1.0f, 0.0f},
+    (Vec3f) {0.0f, 1.8f, 0.0f},
     0.0f,
     -0.3f,
     0.0f,

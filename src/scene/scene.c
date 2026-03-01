@@ -19,6 +19,7 @@
 #define IN_MATERIAL 1
 #define IN_OBJECT 2
 #define IN_SKYBOX 3
+#define IN_PATH 4
 
 void trimString(char *str) {
   int start = 0, end = strlen(str) -1;
@@ -55,7 +56,14 @@ int parse_scene_file(Scene *scene, char* filepath) {
   char current_mesh_name[64];
   char current_mat_name[64];
 
-  Material current_material = {0};
+  Material  current_material  = {0};
+  Path      current_path      = {0};
+
+  current_path.waypoint_count = 0;
+  current_path.starting_pos = vec3f_identity();
+  current_path.is_loop = 0;
+  current_path.current_waypoint = 0;
+  current_path.initialized = 0;
 
   Entity current_entity;
 
@@ -141,6 +149,25 @@ int parse_scene_file(Scene *scene, char* filepath) {
           sscanf(line, "velocity %f %f %f", &v.x, &v.y, &v.z);
           world_add_velocity(&scene->world, current_entity, v);
         }
+        if (strncmp(line, "speed", 5) == 0) {
+          float s;
+          sscanf(line, "speed %f", &s);
+          world_add_speed(&scene->world, current_entity, s);
+        }
+        if (strncmp(line, "path", 4) == 0) {
+          state = IN_PATH;
+
+          current_path.waypoint_count = 0;
+          current_path.starting_pos = vec3f_identity();
+          current_path.current_waypoint = 0;
+          current_path.initialized = 0;
+
+          if (strncmp(line, "path loop", 9) == 0) {
+            current_path.is_loop = 1;
+          } else {
+            current_path.is_loop = 0;
+          }
+        }
         if (strncmp(line, "end", 3) == 0) {
           int mesh_id = find_id(mesh_names, scene->world.mesh_registry.count, current_mesh_name);
           int mat_id = find_id(material_names, scene->world.material_registry.count, current_mat_name);
@@ -161,6 +188,19 @@ int parse_scene_file(Scene *scene, char* filepath) {
           state = IDLE;
         }
         break;
+      case(IN_PATH):
+        if (strncmp(line, "waypoint", 8) == 0) {
+          Vec3f wp;
+          sscanf(line, "waypoint %f %f %f", &wp.x, &wp.y, &wp.z);
+          current_path.waypoints[current_path.waypoint_count++] = wp;
+        }
+        if (strncmp(line, "end", 3) == 0) {
+          PositionComponent *pc = world_get_position(&scene->world, current_entity);
+          if (pc) current_path.starting_pos = pc->position;
+          world_add_path(&scene->world, current_entity, current_path);
+
+          state = IN_OBJECT;
+        }
     }
   }
 
@@ -181,6 +221,7 @@ void scene_render(Scene *scene, App *app) {
   shader_use(app->shader);
 
   glUniform3f(glGetUniformLocation(app->shader, "u_light_dir"), 0.3f, 1.0f, 0.7f);
+
 
   MeshComponent *mesh_c, *tmp;
   HASH_ITER(hh, scene->world.meshes, mesh_c, tmp) {

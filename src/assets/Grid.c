@@ -1,6 +1,7 @@
 #include "Grid.h"
 #include "app/App.h"
 #include "maths/Maths3D.h"
+#include <stdio.h>
 #include <stdlib.h>
 
 void init_grid(Grid *grid, int size, int spacing) {

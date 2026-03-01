@@ -9,6 +9,8 @@ void world_init(World *world) {
   world->meshes     = NULL;
   world->materials  = NULL;
   world->velocities = NULL;
+  world->paths      = NULL;
+  world->speeds     = NULL;
 
   mesh_reg_init(&world->mesh_registry);
   mat_reg_init(&world->material_registry);
@@ -61,6 +63,20 @@ void world_add_velocity(World *world, Entity e, Vec3f velocity) {
   HASH_ADD_INT(world->velocities, entity, c);
 }
 
+void world_add_path(World *world, Entity e, Path path) {
+  PathComponent *c = malloc(sizeof(PathComponent));
+  c->entity = e;
+  c->path = path;
+  HASH_ADD_INT(world->paths, entity, c);
+}
+
+void world_add_speed(World *world, Entity e, float speed) {
+  SpeedComponent *c = malloc(sizeof(SpeedComponent));
+  c->entity = e;
+  c->speed = speed;
+  HASH_ADD_INT(world->speeds, entity, c);
+}
+
 
 PositionComponent* world_get_position(World *world, Entity e) {
   PositionComponent *c;
@@ -97,6 +113,19 @@ VelocityComponent* world_get_velocity(World *world, Entity e) {
   HASH_FIND_INT(world->velocities, &e, c);
   return c;
 }
+
+PathComponent* world_get_path(World *world, Entity e) {
+  PathComponent *c;
+  HASH_FIND_INT(world->paths, &e, c);
+  return c;
+}
+
+SpeedComponent* world_get_speed(World *world, Entity e) {
+  SpeedComponent *c;
+  HASH_FIND_INT(world->speeds, &e, c);
+  return c;
+}
+
 
 Mat4 world_get_transform(World *world, Entity e) {
   PositionComponent *pc = world_get_position(world, e);
@@ -149,6 +178,20 @@ static void destroy_velocity(World *world, VelocityComponent *c) {
   free(c);
 }
 
+static void destroy_path(World *world, PathComponent *c) {
+  HASH_DEL(world->paths, c);
+  free(c);
+}
+
+static void destroy_speed(World *world, SpeedComponent *c) {
+  HASH_DEL(world->speeds, c);
+  free(c);
+}
+
+void world_destroy_path(World *world, PathComponent *pc) {
+  destroy_path(world, pc);
+}
+
 
 void world_destroy_entity(World *world, Entity e) {
   PositionComponent *p = world_get_position(world, e);
@@ -168,6 +211,12 @@ void world_destroy_entity(World *world, Entity e) {
 
   VelocityComponent *v = world_get_velocity(world, e);
   if (v) destroy_velocity(world, v);
+
+  PathComponent *path = world_get_path(world, e);
+  if (path) destroy_path(world, path);
+
+  SpeedComponent *speed = world_get_speed(world, e);
+  if (speed) destroy_speed(world, speed);
 }
 
 void world_destroy(World *world) {
@@ -188,6 +237,12 @@ void world_destroy(World *world) {
 
   VelocityComponent *v, *tmp6;
   HASH_ITER(hh, world->velocities, v, tmp6) { destroy_velocity(world, v); }
+
+  PathComponent *path, *tmp7;
+  HASH_ITER(hh, world->paths, path, tmp7) { destroy_path(world, path); }
+
+  SpeedComponent *speed, *tmp8;
+  HASH_ITER(hh, world->speeds, speed, tmp8) { destroy_speed(world, speed); }
 
   world->next_id = 0;
 

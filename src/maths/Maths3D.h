@@ -36,6 +36,7 @@ Vec3f vec3f_normalize(Vec3f v);
 Vec3f vec3f_add(Vec3f a, Vec3f b);
 Vec3f vec3f_scale(Vec3f v, float s);
 Vec3f vec3f_product(Vec3f a, Vec3f b);
+int vec3f_equals(Vec3f a, Vec3f b);
 Vec3f compute_face_normal(Vec3f a, Vec3f b, Vec3f c);
 Vec4f mat4_mul_vec4(Mat4 m, Vec4f v);
 Vec3f vec3f_identity();

@@ -59,14 +59,15 @@ int app_create(App *app, int width, int height) {
   printf("OpenGL: %s\n", glGetString(GL_VERSION));
 
   GLuint shader = shader_load("shaders/mesh.vert", "shaders/mesh.frag");
+  GLuint flat_shader = shader_load("shaders/flat.vert", "shaders/flat.frag");
 
   setup_depth();
 
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-
   app->window = window;
   app->shader = shader;
+  app->flat_shader = flat_shader;
 
   return 0;
 }
@@ -98,5 +99,6 @@ void app_run(App *app) {
 
 void app_destroy(App *app) {
   shader_free(app->shader);
+  shader_free(app->flat_shader);
   glfwTerminate();
 }

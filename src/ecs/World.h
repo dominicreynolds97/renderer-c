@@ -5,6 +5,8 @@
 #include "scene/Registry.h"
 #include "vendor/uthash.h"
 
+#define MAX_WAYPOINTS 16
+
 typedef int Entity;
 
 typedef struct {
@@ -44,6 +46,27 @@ typedef struct {
 } VelocityComponent;
 
 typedef struct {
+  Vec3f   starting_pos;
+  Vec3f   waypoints[MAX_WAYPOINTS];
+  int     is_loop;
+  int     current_waypoint;
+  int     waypoint_count;
+  int     initialized;
+} Path;
+
+typedef struct {
+  Entity  entity;
+  Path    path;
+  UT_hash_handle hh;
+} PathComponent;
+
+typedef struct {
+  Entity  entity;
+  float   speed;
+  UT_hash_handle hh;
+} SpeedComponent;
+
+typedef struct {
   int next_id;
 
   PositionComponent   *positions;
@@ -52,6 +75,8 @@ typedef struct {
   MeshComponent       *meshes;
   MaterialComponent   *materials;
   VelocityComponent   *velocities;
+  PathComponent       *paths;
+  SpeedComponent      *speeds;
 
   MeshRegistry        mesh_registry;
   MaterialRegistry    material_registry;
@@ -66,6 +91,8 @@ void world_add_scale(World *world, Entity e, Vec3f scale);
 void world_add_material(World *world, Entity e, int mesh_id);
 void world_add_mesh(World *world, Entity e, int mesh_id);
 void world_add_velocity(World *world, Entity e, Vec3f velocity);
+void world_add_path(World *world, Entity e, Path path);
+void world_add_speed(World *world, Entity e, float speed);
 
 PositionComponent* world_get_position(World *world, Entity e);
 RotationComponent* world_get_rotation(World *world, Entity e);
@@ -73,6 +100,10 @@ ScaleComponent* world_get_scale(World *world, Entity e);
 MaterialComponent* world_get_material(World *world, Entity e);
 MeshComponent* world_get_mesh(World *world, Entity e);
 VelocityComponent* world_get_velocity(World *world, Entity e);
+PathComponent* world_get_path(World *world, Entity e);
+SpeedComponent* world_get_speed(World *world, Entity e);
+
+void world_destroy_path(World *world, PathComponent *pc);
 
 Mat4 world_get_transform(World *world, Entity e);
 
