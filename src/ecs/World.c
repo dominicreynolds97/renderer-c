@@ -17,16 +17,19 @@ static void init_player(World *world) {
 }
 
 void world_init(World *world) {
-  world->next_id    = 0;
-  world->positions  = NULL;
-  world->rotations  = NULL;
-  world->scales     = NULL;
-  world->meshes     = NULL;
-  world->materials  = NULL;
-  world->velocities = NULL;
-  world->paths      = NULL;
-  world->speeds     = NULL;
-  world->colliders  = NULL;
+  world->next_id      = 0;
+  world->positions    = NULL;
+  world->rotations    = NULL;
+  world->scales       = NULL;
+  world->meshes       = NULL;
+  world->materials    = NULL;
+  world->velocities   = NULL;
+  world->paths        = NULL;
+  world->speeds       = NULL;
+  world->colliders    = NULL;
+  world->masses       = NULL;
+  world->locomotions  = NULL;
+  world->jumps        = NULL;
 
   init_player(world);
 
@@ -105,6 +108,29 @@ void world_add_collider(World *world, Entity e, Vec3f half_extents, int is_stati
   HASH_ADD_INT(world->colliders, entity, c);
 }
 
+void world_add_mass(World *world, Entity e, float mass) {
+  MassComponent *c = malloc(sizeof(MassComponent));
+  c->entity = e;
+  c->mass = mass;
+  c->is_grounded = 0;
+  HASH_ADD_INT(world->masses, entity, c);
+}
+
+void world_add_locomotion(World *world, Entity e, float thrust, float max_speed) {
+  LocomotionComponent *c = malloc(sizeof(LocomotionComponent));
+  c->entity = e;
+  c->thrust = thrust;
+  c->max_speed = max_speed;
+  HASH_ADD_INT(world->locomotions, entity, c);
+}
+
+void world_add_jump(World *world, Entity e, float jump_force) {
+  JumpComponent *c = malloc(sizeof(JumpComponent));
+  c->entity = e;
+  c->jump_force = jump_force;
+  HASH_ADD_INT(world->jumps, entity, c);
+}
+
 
 PositionComponent* world_get_position(World *world, Entity e) {
   PositionComponent *c;
@@ -159,6 +185,25 @@ ColliderComponent* world_get_collider(World *world, Entity e) {
   HASH_FIND_INT(world->colliders, &e, c);
   return c;
 }
+
+MassComponent* world_get_mass(World *world, Entity e) {
+  MassComponent *c;
+  HASH_FIND_INT(world->masses, &e, c);
+  return c;
+}
+
+JumpComponent* world_get_jump(World *world, Entity e) {
+  JumpComponent *c;
+  HASH_FIND_INT(world->jumps, &e, c);
+  return c;
+}
+
+LocomotionComponent* world_get_locomotion(World *world, Entity e) {
+  LocomotionComponent *c;
+  HASH_FIND_INT(world->locomotions, &e, c);
+  return c;
+}
+
 
 Mat4 world_get_transform(World *world, Entity e) {
   PositionComponent *pc = world_get_position(world, e);
@@ -226,6 +271,22 @@ static void destroy_collider(World *world, ColliderComponent *c) {
   free(c);
 }
 
+static void destroy_mass(World *world, MassComponent *c) {
+  HASH_DEL(world->masses, c);
+  free(c);
+}
+
+static void destroy_jump(World *world, JumpComponent *c) {
+  HASH_DEL(world->jumps, c);
+  free(c);
+}
+
+static void destroy_locomotion(World *world, LocomotionComponent *c) {
+  HASH_DEL(world->locomotions, c);
+  free(c);
+}
+
+
 void world_destroy_path(World *world, PathComponent *pc) {
   destroy_path(world, pc);
 }
@@ -258,7 +319,17 @@ void world_destroy_entity(World *world, Entity e) {
 
   ColliderComponent *collider = world_get_collider(world, e);
   if (collider) destroy_collider(world, collider);
+
+  MassComponent *mass = world_get_mass(world, e);
+  if (mass) destroy_mass(world, mass);
+
+  LocomotionComponent *locomotion = world_get_locomotion(world, e);
+  if (locomotion) destroy_locomotion(world, locomotion);
+
+  JumpComponent *jump = world_get_jump(world, e);
+  if (jump) destroy_jump(world, jump);
 }
+
 
 void world_destroy(World *world) {
   PositionComponent *p, *tmp1;
@@ -287,6 +358,15 @@ void world_destroy(World *world) {
 
   ColliderComponent *collider, *tmp9;
   HASH_ITER(hh, world->colliders, collider, tmp9) { destroy_collider(world, collider); }
+
+  MassComponent *mass, *tmp10;
+  HASH_ITER(hh, world->masses, mass, tmp10) { destroy_mass(world, mass); }
+
+  LocomotionComponent *locomotion, *tmp11;
+  HASH_ITER(hh, world->locomotions, locomotion, tmp11) { destroy_locomotion(world, locomotion); }
+
+  JumpComponent *jump, *tmp12;
+  HASH_ITER(hh, world->jumps, jump, tmp12) { destroy_jump(world, jump); }
 
   world->next_id = 0;
 

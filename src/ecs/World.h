@@ -76,8 +76,30 @@ typedef struct {
   Entity  entity;
   Vec3f   half_extents;
   int     is_static;
+  float   restitution;
+  float   friction;
   UT_hash_handle hh;
 } ColliderComponent;
+
+typedef struct {
+  Entity  entity;
+  float   mass;
+  int     is_grounded; // ???
+  UT_hash_handle hh;
+} MassComponent;
+
+typedef struct {
+  Entity  entity;
+  float   thrust;
+  float   max_speed;
+  UT_hash_handle hh;
+} LocomotionComponent;
+
+typedef struct {
+  Entity  entity;
+  float   jump_force;
+  UT_hash_handle hh;
+} JumpComponent;
 
 typedef struct {
   int next_id;
@@ -92,6 +114,9 @@ typedef struct {
   SpeedComponent      *speeds;
   PlayerComponent     player;
   ColliderComponent   *colliders;
+  MassComponent       *masses;
+  LocomotionComponent *locomotions;
+  JumpComponent       *jumps;
 
   MeshRegistry        mesh_registry;
   MaterialRegistry    material_registry;
@@ -111,6 +136,9 @@ void world_add_velocity(World *world, Entity e, Vec3f velocity);
 void world_add_path(World *world, Entity e, Path path);
 void world_add_speed(World *world, Entity e, float speed);
 void world_add_collider(World *world, Entity e, Vec3f half_extents, int is_static);
+void world_add_mass(World *world, Entity e, float mass);
+void world_add_locomotion(World *world, Entity e, float thrust, float max_speed);
+void world_add_jump(World *world, Entity e, float jump_force);
 
 PositionComponent* world_get_position(World *world, Entity e);
 RotationComponent* world_get_rotation(World *world, Entity e);
@@ -121,6 +149,9 @@ VelocityComponent* world_get_velocity(World *world, Entity e);
 PathComponent* world_get_path(World *world, Entity e);
 SpeedComponent* world_get_speed(World *world, Entity e);
 ColliderComponent* world_get_collider(World *world, Entity e);
+MassComponent* world_get_mass(World *world, Entity e);
+LocomotionComponent* world_get_locomotion(World *world, Entity e);
+JumpComponent* world_get_jump(World *world, Entity e);
 
 void world_destroy_path(World *world, PathComponent *pc);
 
