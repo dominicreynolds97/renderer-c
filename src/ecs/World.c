@@ -11,7 +11,10 @@ static void init_player(World *world) {
   };
   world_add_position(world, e, (Vec3f){0.0f, 1.8f, 0.0f});
   world_add_velocity(world, e, vec3f_identity());
-  world_add_collider(world, e, (Vec3f){0.3f, 1.6f, 0.3f}, 0);
+  world_add_collider(world, e, (Vec3f){0.3f, 1.6f, 0.3f}, 0, 0.3, 0.7);
+  world_add_locomotion(world, e, 2.0, 5.0);
+  world_add_jump(world, e, 5.0);
+  world_add_mass(world, e, 80.0);
   //world_add_rotation(world, e, vec3f_identity());
   world_add_speed(world, e, 5.0f);
 }
@@ -100,11 +103,13 @@ void world_add_speed(World *world, Entity e, float speed) {
   HASH_ADD_INT(world->speeds, entity, c);
 }
 
-void world_add_collider(World *world, Entity e, Vec3f half_extents, int is_static) {
+void world_add_collider(World *world, Entity e, Vec3f half_extents, int is_static, float restitution, float friction) {
   ColliderComponent *c = malloc(sizeof(ColliderComponent));
   c->entity = e;
   c->half_extents = half_extents;
   c->is_static = is_static;
+  c->restitution = restitution;
+  c->friction = friction;
   HASH_ADD_INT(world->colliders, entity, c);
 }
 
@@ -112,7 +117,7 @@ void world_add_mass(World *world, Entity e, float mass) {
   MassComponent *c = malloc(sizeof(MassComponent));
   c->entity = e;
   c->mass = mass;
-  c->is_grounded = 0;
+  c->grounded_entity = -1;
   HASH_ADD_INT(world->masses, entity, c);
 }
 

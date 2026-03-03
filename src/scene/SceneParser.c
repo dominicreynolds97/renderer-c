@@ -83,12 +83,20 @@ static void parse_rotation(SceneIterator *it, Entity e, World *world) {
 static void parse_collider(SceneIterator *it, Entity e, World *world) {
   int is_static = strncmp(it->line, "collider dynamic", 16) == 0 ? 0 : 1;
   Vec3f half_extents = vec3f_identity();
+  float restitution = 0.3;
+  float friction = 0.5;
   while (next_line(it)) {
     if (strncmp(it->line, "extents", 7) == 0) {
       sscanf(it->line, "extents %f %f %f", &half_extents.x, &half_extents.y, &half_extents.z);
     }
+    if (strncmp(it->line, "restitution", 10) == 0) {
+      sscanf(it->line, "restitution %f", &restitution);
+    }
+    if (strncmp(it->line, "friction", 8) == 0) {
+      sscanf(it->line, "friction %f", &friction);
+    }
     if (strncmp(it->line, "end", 3) == 0) {
-      world_add_collider(world, e, half_extents, is_static);
+      world_add_collider(world, e, half_extents, is_static, restitution, friction);
       break;
     }
   }
@@ -119,15 +127,16 @@ static void parse_mass(SceneIterator *it, Entity e, World *world) {
 }
 
 static void parse_locomotion(SceneIterator *it, Entity e, World *world) {
-  (void)it;
-  (void)e;
-  (void)world;
+  float thrust;
+  float max_speed;
+  sscanf(it->line, "locomotion %f %f", &thrust, &max_speed);
+  world_add_locomotion(world, e, thrust, max_speed);
 }
 
 static void parse_jump(SceneIterator *it, Entity e, World *world) {
-  (void)it;
-  (void)e;
-  (void)world;
+  float jump_force;
+  sscanf(it->line, "jump_force %f", &jump_force);
+  world_add_jump(world, e, jump_force);
 }
 
 static void parse_path(SceneIterator *it, Entity e, World *world) {

@@ -2,6 +2,7 @@
 
 mesh plane meshes/plane.obj
 mesh cube meshes/cube.obj
+mesh sphere meshes/sphere.obj
 mesh cylinder meshes/cylinder.obj
 
 // Skybox
@@ -28,31 +29,34 @@ object plane green
   position 0.0 0.0 0.0
   collider
     extents 15.0 0.1 15.0
+    friction 0.8
   end
 end
 
 object cube red
   position -2.0 1.0 0.0
-  collider
+  mass 150.0
+  collider dynamic
     extents 1.0 1.0 1.0
-  end
-  speed 1.0
-  path loop
-    waypoint 0.0 0.0 0.0
-    waypoint 5.0 0.0 0.0
-    waypoint 5.0 0.0 5.0
-    waypoint 0.0 0.0 5.0
   end
 end
 
 object cylinder teal
-  position 2.0 1.0 -2.0
-  collider
+  position 2.0 10.0 -2.0
+  mass 200.0
+  collider dynamic
     extents 1.0 1.0 1.0
   end
-  speed 2.0
-  path loop
-    waypoint 0.0 0.0 0.0
-    waypoint 0.0 10.0 0.0
+end
+
+object sphere red
+  position 5.0 20.0 0.0
+  scale 0.5 0.5 0.5
+  velocity 0.0 0.0 -1.0
+  mass 25.0
+  collider dynamic
+    extents 0.5 0.5 0.5
+    restiution 0.8
+    friction 0.7
   end
 end

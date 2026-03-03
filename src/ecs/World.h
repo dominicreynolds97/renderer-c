@@ -84,7 +84,7 @@ typedef struct {
 typedef struct {
   Entity  entity;
   float   mass;
-  int     is_grounded; // ???
+  Entity  grounded_entity;
   UT_hash_handle hh;
 } MassComponent;
 
@@ -135,7 +135,7 @@ void world_add_mesh(World *world, Entity e, int mesh_id);
 void world_add_velocity(World *world, Entity e, Vec3f velocity);
 void world_add_path(World *world, Entity e, Path path);
 void world_add_speed(World *world, Entity e, float speed);
-void world_add_collider(World *world, Entity e, Vec3f half_extents, int is_static);
+void world_add_collider(World *world, Entity e, Vec3f half_extents, int is_static, float restitution, float friction);
 void world_add_mass(World *world, Entity e, float mass);
 void world_add_locomotion(World *world, Entity e, float thrust, float max_speed);
 void world_add_jump(World *world, Entity e, float jump_force);
